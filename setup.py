@@ -2,7 +2,6 @@ from setuptools import setup, find_packages
 
 
 VERSION = '0.0.1'
-
 setup(
     name='aiologger',
     version=VERSION,
@@ -13,6 +12,15 @@ setup(
     keywords='logging json log output',
     classifiers=[
         'Development Status :: 4 - Beta',
-        'Programming Language :: Python :: 3.6'
+        'Framework :: AsyncIO',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Information Technology',
+        'Natural Language :: English',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Unix'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: System :: Logging'
     ]
 )
