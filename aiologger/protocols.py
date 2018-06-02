@@ -1,5 +1,5 @@
 import asyncio
 
 
-class StdProtocol(asyncio.Protocol):
+class AiologgerProtocol(asyncio.Protocol):
     pass

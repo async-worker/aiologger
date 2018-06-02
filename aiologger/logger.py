@@ -7,7 +7,7 @@ from io import TextIOBase
 from typing import Type, Union
 
 from aiologger.filters import StdoutFilter
-from aiologger.protocols import StdoutProtocol, StderrProtocol
+from aiologger.protocols import AiologgerProtocol
 
 
 class AsyncStreamHandler(logging.StreamHandler):
@@ -61,3 +61,76 @@ class AsyncStreamHandler(logging.StreamHandler):
             await self.stream.drain()
         except Exception:
             await self.handleError(record)
+
+
+class Logger(logging.Logger):
+    def __init__(self, *,
+                 loop=None,
+                 stdout_writer: StreamWriter,
+                 stderr_writer: StreamWriter,
+                 name='json_logger',
+                 level=logging.DEBUG,
+                 formatter: logging.Formatter=None):
+        super(Logger, self).__init__(name, level)
+        self.loop = loop
+        self.stdout_writer = stdout_writer
+        self.stderr_writer = stderr_writer
+        if formatter is None:
+            formatter = logging.Formatter()
+        self.formatter = formatter
+
+        stdout_handler = AsyncStreamHandler.make(level=logging.DEBUG,
+                                                 stream=self.stdout_writer,
+                                                 formatter=self.formatter,
+                                                 filter=StdoutFilter())
+        self.addHandler(stdout_handler)
+
+        stderr_handler = AsyncStreamHandler.make(level=logging.WARNING,
+                                                 stream=self.stderr_writer,
+                                                 formatter=self.formatter)
+        self.addHandler(stderr_handler)
+
+    @classmethod
+    async def make_stream_writer(cls,
+                                 protocol_factory: Type[asyncio.Protocol],
+                                 pipe: TextIOBase,
+                                 pipe_fileno: int=None,
+                                 loop=None) -> StreamWriter:
+        """
+        The traditional UNIX system calls are blocking.
+        """
+        loop = loop or asyncio.get_event_loop()
+        _set_nonblocking(pipe_fileno or pipe.fileno())
+        transport, protocol = await loop.connect_write_pipe(protocol_factory,
+                                                            pipe)
+        return StreamWriter(transport=transport,
+                            protocol=protocol,
+                            reader=None,
+                            loop=loop)
+
+    @classmethod
+    async def init_async(cls, *,
+                         loop=None,
+                         name='default',
+                         level=logging.DEBUG):
+        loop = loop or asyncio.get_event_loop()
+
+        stdout_writer = await cls.make_stream_writer(
+            protocol_factory=AiologgerProtocol,
+            pipe=sys.stdout,
+            loop=loop
+        )
+
+        stderr_writer = await cls.make_stream_writer(
+            protocol_factory=AiologgerProtocol,
+            pipe=sys.stderr,
+            loop=loop
+        )
+
+        return cls(
+            loop=loop,
+            stdout_writer=stdout_writer,
+            stderr_writer=stderr_writer,
+            name=name,
+            level=level
+        )
