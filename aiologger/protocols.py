@@ -2,4 +2,5 @@ import asyncio
 
 
 class AiologgerProtocol(asyncio.Protocol):
-    pass
+    async def _drain_helper(self):
+        pass

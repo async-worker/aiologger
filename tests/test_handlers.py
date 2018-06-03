@@ -116,3 +116,11 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             self.assertFalse(await handler.handle(self.record))
             filter.assert_called_once_with(self.record)
             emit.assert_not_awaited()
+
+    async def test_close_closes_the_underlying_transport(self):
+        handler = await AsyncStreamHandler.init_from_pipe(pipe=self.write_pipe,
+                                                          level=10,
+                                                          formatter=Mock())
+        self.assertFalse(handler.stream.transport._closing)
+        await handler.close()
+        self.assertTrue(handler.stream.transport._closing)

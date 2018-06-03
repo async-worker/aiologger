@@ -70,6 +70,9 @@ class AsyncStreamHandler(StreamHandler):
             await self.emit(record)
         return rv
 
+    async def flush(self):
+        await self.stream.drain()
+
     async def emit(self, record: LogRecord):
         """
         Actually log the specified logging record to the stream.
@@ -81,3 +84,14 @@ class AsyncStreamHandler(StreamHandler):
             await self.stream.drain()
         except Exception:
             await self.handleError(record)
+
+    def close(self):
+        """
+        Tidy up any resources used by the handler.
+
+        This version removes the handler from an internal map of handlers,
+        _handlers, which is used for handler lookup by name. Subclasses
+        should ensure that this gets called from overridden close()
+        methods.
+        """
+        self.stream.close()
