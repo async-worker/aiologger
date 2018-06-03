@@ -94,13 +94,11 @@ class Logger(logging.Logger):
     async def make_stream_writer(cls,
                                  protocol_factory: Type[asyncio.Protocol],
                                  pipe: TextIOBase,
-                                 pipe_fileno: int=None,
                                  loop=None) -> StreamWriter:
         """
         The traditional UNIX system calls are blocking.
         """
         loop = loop or asyncio.get_event_loop()
-        _set_nonblocking(pipe_fileno or pipe.fileno())
         transport, protocol = await loop.connect_write_pipe(protocol_factory,
                                                             pipe)
         return StreamWriter(transport=transport,
