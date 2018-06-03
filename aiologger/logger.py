@@ -192,3 +192,25 @@ class Logger(logging.Logger):
         """
         await self.error(msg, *args, exc_info=exc_info, **kwargs)
 
+    async def shutdown(self):
+        """
+        Perform any cleanup actions in the logging system (e.g. flushing
+        buffers).
+
+        Should be called at application exit.
+        """
+        for handler in reversed(self.handlers):
+            if not handler:
+                continue
+            try:
+                await handler.flush()
+                handler.close()
+            except Exception as e :
+                """
+                Ignore errors which might be caused
+                because handlers have been closed but
+                references to them are still around at
+                application exit. Basically ignore everything, 
+                as we're shutting down
+                """
+                pass

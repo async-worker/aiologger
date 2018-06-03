@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 from asynctest import CoroutineMock
 
+from aiologger.handlers import AsyncStreamHandler
 from aiologger.logger import Logger
 
 
@@ -217,3 +218,27 @@ class LoggerTests(asynctest.TestCase):
 
         self.assertIn(current_func_name.encode(), logged_content)
         self.assertIn(b"raise Exception('Xablau')", logged_content)
+
+    async def test_shutdown_closes_all_handlers(self):
+        logger = Logger()
+        logger.handlers = [
+            Mock(flush=CoroutineMock()),
+            Mock(flush=CoroutineMock())
+        ]
+        await logger.shutdown()
+
+        for handler in logger.handlers:
+            handler.flush.assert_awaited_once()
+            handler.close.assert_called_once()
+
+    async def test_shutdown_ignores_erros(self):
+        logger = Logger()
+        logger.handlers = [
+            Mock(flush=CoroutineMock(side_effect=ValueError)),
+            Mock(flush=CoroutineMock())
+        ]
+
+        await logger.shutdown()
+
+        logger.handlers[0].close.assert_not_called()
+        logger.handlers[1].close.assert_called_once()
