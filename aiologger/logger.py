@@ -1,133 +1,48 @@
-import asyncio
 import logging
 import sys
-from asyncio.streams import StreamWriter
-from io import TextIOBase
-from typing import Type, Union
-
 from aiologger.filters import StdoutFilter
+from aiologger.handlers import AsyncStreamHandler
 from aiologger.protocols import AiologgerProtocol
-
-
-class AsyncStreamHandler(logging.StreamHandler):
-    def __init__(self,
-                 stream: StreamWriter,
-                 level: Union[int, str],
-                 formatter: logging.Formatter,
-                 filter: logging.Filter = None):
-        super().__init__(stream)
-        self.setLevel(level)
-        self.setFormatter(formatter)
-
-        if filter:
-            self.addFilter(filter)
-
-    async def handleError(self, record: logging.LogRecord):
-        """
-        Handle errors which occur during an emit() call.
-
-        This method should be called from handlers when an exception is
-        encountered during an emit() call. If raiseExceptions is false,
-        exceptions get silently ignored. This is what is mostly wanted
-        for a logging system - most users will not care about errors in
-        the logging system, they are more interested in application errors.
-        You could, however, replace this with a custom handler if you wish.
-        The record which was being processed is passed in to this method.
-        """
-        pass  # pragma: no cover
-
-    async def handle(self, record: logging.LogRecord) -> bool:
-        """
-        Conditionally emit the specified logging record.
-        Emission depends on filters which may have been added to the handler.
-        """
-        rv = self.filter(record)
-        if rv:
-            await self.emit(record)
-        return rv
-
-    async def emit(self, record: logging.LogRecord):
-        """
-        Actually log the specified logging record to the stream.
-        """
-        try:
-            msg = self.format(record) + self.terminator
-
-            await self.stream.write(msg.encode())
-            await self.stream.drain()
-        except Exception:
-            await self.handleError(record)
 
 
 class Logger(logging.Logger):
     def __init__(self, *,
-                 loop=None,
-                 stdout_writer: StreamWriter,
-                 stderr_writer: StreamWriter,
-                 name='json_logger',
-                 level=logging.DEBUG,
-                 formatter: logging.Formatter=None):
+                 name='default-logger',
+                 level=logging.NOTSET,
+                 loop=None):
         super(Logger, self).__init__(name, level)
         self.loop = loop
-        self.stdout_writer = stdout_writer
-        self.stderr_writer = stderr_writer
+
+    @classmethod
+    async def with_default_handlers(cls, *,
+                                    name='logger',
+                                    level=logging.NOTSET,
+                                    formatter: logging.Formatter=None,
+                                    loop=None):
         if formatter is None:
             formatter = logging.Formatter()
-        self.formatter = formatter
 
-        stdout_handler = AsyncStreamHandler(level=logging.DEBUG,
-                                            stream=self.stdout_writer,
-                                            formatter=self.formatter,
-                                            filter=StdoutFilter())
+        stdout_handler = await AsyncStreamHandler.init_from_pipe(
+            pipe=sys.stdout,
+            level=level,
+            protocol_factory=AiologgerProtocol,
+            formatter=formatter,
+            filter=StdoutFilter(),
+            loop=loop)
+
+        stderr_handler = await AsyncStreamHandler.init_from_pipe(
+            pipe=sys.stderr,
+            level=level,
+            protocol_factory=AiologgerProtocol,
+            formatter=formatter,
+            loop=loop)
+
+        self = cls(name=name, level=level)
+
         self.addHandler(stdout_handler)
-
-        stderr_handler = AsyncStreamHandler(level=logging.WARNING,
-                                            stream=self.stderr_writer,
-                                            formatter=self.formatter)
         self.addHandler(stderr_handler)
 
-    @classmethod
-    async def make_stream_writer(cls,
-                                 protocol_factory: Type[asyncio.Protocol],
-                                 pipe: TextIOBase,
-                                 loop=None) -> StreamWriter:
-        """
-        The traditional UNIX system calls are blocking.
-        """
-        loop = loop or asyncio.get_event_loop()
-        transport, protocol = await loop.connect_write_pipe(protocol_factory,
-                                                            pipe)
-        return StreamWriter(transport=transport,
-                            protocol=protocol,
-                            reader=None,
-                            loop=loop)
-
-    @classmethod
-    async def init_async(cls, *,
-                         loop=None,
-                         name='default',
-                         level=logging.DEBUG):
-        loop = loop or asyncio.get_event_loop()
-
-        stdout_writer = await cls.make_stream_writer(
-            protocol_factory=AiologgerProtocol,
-            pipe=sys.stdout,
-            loop=loop
-        )
-
-        stderr_writer = await cls.make_stream_writer(
-            protocol_factory=AiologgerProtocol,
-            pipe=sys.stderr,
-            loop=loop
-        )
-
-        return cls(
-            loop=loop,
-            stdout_writer=stdout_writer,
-            stderr_writer=stderr_writer,
-            name=name,
-            level=level
-        )
+        return self
 
     async def callHandlers(self, record):
         """
