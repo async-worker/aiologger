@@ -1,5 +1,4 @@
 import asyncio
-import fcntl
 import inspect
 import os
 from logging import LogRecord
@@ -11,7 +10,6 @@ from unittest.mock import Mock, patch
 from asynctest import CoroutineMock
 
 from aiologger.logger import Logger
-from aiologger.protocols import AiologgerProtocol
 
 
 class LoggerTests(asynctest.TestCase):
