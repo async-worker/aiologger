@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 from asyncio.streams import StreamWriter
-from asyncio.unix_events import _set_nonblocking
 from io import TextIOBase
 from typing import Type, Union
 
