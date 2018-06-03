@@ -92,9 +92,13 @@ class LoggerTests(asynctest.TestCase):
         self.read_pipe = os.fdopen(r_fileno, 'r')
         self.write_pipe = os.fdopen(w_fileno, 'w')
 
+        patch('aiologger.logger.sys.stdout', self.write_pipe).start()
+        patch('aiologger.logger.sys.stderr', self.write_pipe).start()
+
     def tearDown(self):
         self.read_pipe.close()
         self.write_pipe.close()
+        patch.stopall()
 
     async def test_init_async_initializes_stream_writers(self):
         with patch.object(Logger, 'make_stream_writer',
@@ -127,3 +131,91 @@ class LoggerTests(asynctest.TestCase):
         self.assertIsInstance(writer, asyncio.StreamWriter)
         self.assertIsInstance(writer._protocol, AiologgerProtocol)
         self.assertEqual(writer.transport._pipe, self.write_pipe)
+
+    async def test_callhandlers_calls_handlers_for_loglevel(self):
+        level10_handler = Mock(level=10, handle=CoroutineMock())
+        level30_handler = Mock(level=30, handle=CoroutineMock())
+
+        logger = await Logger.init_async()
+        logger.handlers = [level10_handler, level30_handler]
+
+        record = LogRecord(
+            level=20,
+            name='aiologger',
+            pathname="/aiologger/tests/test_logger.py",
+            lineno=17,
+            msg="Xablau!",
+            exc_info=None,
+            args=None
+        )
+        await logger.callHandlers(record)
+
+        level10_handler.handle.assert_awaited_once_with(record)
+        level30_handler.handle.assert_not_awaited()
+
+    async def test_it_raises_an_error_if_no_handlers_are_found_for_record(self):
+        logger = await Logger.init_async()
+        logger.handlers = []
+
+        record = LogRecord(
+            level=10,
+            name='aiologger',
+            pathname="/aiologger/tests/test_logger.py",
+            lineno=17,
+            msg="Xablau!",
+            exc_info=None,
+            args=None
+        )
+        with self.assertRaises(Exception):
+            await logger.callHandlers(record)
+
+    async def test_it_calls_multiple_handlers_if_multiple_handle_matches_are_found_for_record(self):
+        level10_handler = Mock(level=10, handle=CoroutineMock())
+        level20_handler = Mock(level=20, handle=CoroutineMock())
+
+        logger = await Logger.init_async()
+        logger.handlers = [level10_handler, level20_handler]
+
+        record = LogRecord(
+            level=30,
+            name='aiologger',
+            pathname="/aiologger/tests/test_logger.py",
+            lineno=17,
+            msg="Xablau!",
+            exc_info=None,
+            args=None
+        )
+
+        await logger.callHandlers(record)
+
+        level10_handler.handle.assert_awaited_once_with(record)
+        level20_handler.handle.assert_awaited_once_with(record)
+
+    async def test_it_calls_handlers_if_logger_is_enabled_and_record_is_loggable(self):
+        logger = await Logger.init_async()
+        with patch.object(logger, 'filter', return_value=True) as filter, \
+             asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+            record = Mock()
+            await logger.handle(record)
+
+            filter.assert_called_once_with(record)
+            callHandlers.assert_awaited_once_with(record)
+
+    async def test_it_doesnt_calls_handlers_if_logger_is_disabled(self):
+        logger = await Logger.init_async()
+        with asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+            record = Mock()
+            logger.disabled = True
+            await logger.handle(record)
+
+            callHandlers.assert_not_awaited()
+
+    async def test_it_doesnt_calls_handlers_if_record_isnt_loggable(self):
+        logger = await Logger.init_async()
+        with patch.object(logger, 'filter', return_value=False) as filter, \
+                asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+            record = Mock()
+            await logger.handle(record)
+
+            filter.assert_called_once_with(record)
+            callHandlers.assert_not_awaited()

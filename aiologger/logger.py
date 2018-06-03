@@ -134,3 +134,37 @@ class Logger(logging.Logger):
             name=name,
             level=level
         )
+
+    async def callHandlers(self, record):
+        """
+        Pass a record to all relevant handlers.
+
+        Loop through all handlers for this logger and its parents in the
+        logger hierarchy. If no handler was found, raises an error. Stop
+        searching up the hierarchy whenever a logger with the "propagate"
+        attribute set to zero is found - that will be the last logger
+        whose handlers are called.
+        """
+        c = self
+        found = 0
+        while c:
+            for handler in c.handlers:
+                found = found + 1
+                if record.levelno >= handler.level:
+                    await handler.handle(record)
+            if not c.propagate:
+                c = None  # break out
+            else:
+                c = c.parent
+        if found == 0:
+            raise Exception("No handlers could be found for logger")
+
+    async def handle(self, record):
+        """
+        Call the handlers for the specified record.
+
+        This method is used for unpickled records received from a socket, as
+        well as those created locally. Logger-level filtering is applied.
+        """
+        if (not self.disabled) and self.filter(record):
+            await self.callHandlers(record)
