@@ -32,7 +32,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         stream = Mock()
         formatter = Mock()
         filter = Mock()
-        handler = AsyncStreamHandler.make(level, stream, formatter, filter)
+        handler = AsyncStreamHandler(stream, level, formatter, filter)
 
         self.assertIsInstance(handler, AsyncStreamHandler)
 
@@ -46,9 +46,9 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         formatter = Mock(format=Mock(return_value=msg))
         stream = Mock(write=CoroutineMock(), drain=CoroutineMock())
 
-        handler = AsyncStreamHandler.make(level=666,
-                                          stream=stream,
-                                          formatter=formatter)
+        handler = AsyncStreamHandler(level=666,
+                                     stream=stream,
+                                     formatter=formatter)
 
         await handler.emit(self.record)
 
@@ -57,9 +57,9 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
 
     async def test_emit_calls_handleError_if_an_erro_occurs(self):
         stream = Mock(write=CoroutineMock(), drain=CoroutineMock())
-        handler = AsyncStreamHandler.make(level=666,
-                                          stream=stream,
-                                          formatter=Mock(side_effect=Exception))
+        handler = AsyncStreamHandler(level=666,
+                                     stream=stream,
+                                     formatter=Mock(side_effect=Exception))
         with asynctest.patch.object(handler, 'handleError') as handleError:
             await handler.emit(self.record)
 
@@ -68,20 +68,20 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             stream.drain.assert_not_awaited()
 
     async def test_handle_calls_emit_if_a_record_is_loggable(self):
-        handler = AsyncStreamHandler.make(level=666,
-                                          stream=Mock(),
-                                          formatter=Mock(side_effect=Exception))
+        handler = AsyncStreamHandler(level=666,
+                                     stream=Mock(),
+                                     formatter=Mock(side_effect=Exception))
         with asynctest.patch.object(handler, 'emit') as emit, \
-             patch.object(handler, 'filter', return_value=True) as filter:
+                patch.object(handler, 'filter', return_value=True) as filter:
 
             self.assertTrue(await handler.handle(self.record))
             filter.assert_called_once_with(self.record)
             emit.assert_awaited_once_with(self.record)
 
     async def test_handle_doesnt_calls_emit_if_a_record_isnt_loggable(self):
-        handler = AsyncStreamHandler.make(level=666,
-                                          stream=Mock(),
-                                          formatter=Mock(side_effect=Exception))
+        handler = AsyncStreamHandler(level=666,
+                                     stream=Mock(),
+                                     formatter=Mock(side_effect=Exception))
         with asynctest.patch.object(handler, 'emit') as emit, \
                 patch.object(handler, 'filter', return_value=False) as filter:
             self.assertFalse(await handler.handle(self.record))

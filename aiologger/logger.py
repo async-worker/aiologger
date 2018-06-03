@@ -10,20 +10,17 @@ from aiologger.protocols import AiologgerProtocol
 
 
 class AsyncStreamHandler(logging.StreamHandler):
-    @classmethod
-    def make(cls,
-             level: Union[int, str],
-             stream: StreamWriter,
-             formatter: logging.Formatter,
-             filter: logging.Filter=None) -> 'AsyncStreamHandler':
-        self = cls(stream)
+    def __init__(self,
+                 stream: StreamWriter,
+                 level: Union[int, str],
+                 formatter: logging.Formatter,
+                 filter: logging.Filter = None):
+        super().__init__(stream)
         self.setLevel(level)
         self.setFormatter(formatter)
 
         if filter:
             self.addFilter(filter)
-
-        return self
 
     async def handleError(self, record: logging.LogRecord):
         """
@@ -78,15 +75,15 @@ class Logger(logging.Logger):
             formatter = logging.Formatter()
         self.formatter = formatter
 
-        stdout_handler = AsyncStreamHandler.make(level=logging.DEBUG,
-                                                 stream=self.stdout_writer,
-                                                 formatter=self.formatter,
-                                                 filter=StdoutFilter())
+        stdout_handler = AsyncStreamHandler(level=logging.DEBUG,
+                                            stream=self.stdout_writer,
+                                            formatter=self.formatter,
+                                            filter=StdoutFilter())
         self.addHandler(stdout_handler)
 
-        stderr_handler = AsyncStreamHandler.make(level=logging.WARNING,
-                                                 stream=self.stderr_writer,
-                                                 formatter=self.formatter)
+        stderr_handler = AsyncStreamHandler(level=logging.WARNING,
+                                            stream=self.stderr_writer,
+                                            formatter=self.formatter)
         self.addHandler(stderr_handler)
 
     @classmethod
