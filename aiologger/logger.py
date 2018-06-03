@@ -168,3 +168,118 @@ class Logger(logging.Logger):
         """
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
+
+    def make_log_record(self,
+                        level,
+                        msg,
+                        args,
+                        exc_info=None,
+                        extra=None,
+                        stack_info=False):
+        sinfo = None
+        if logging._srcfile:
+            # IronPython doesn't track Python frames, so findCaller raises an
+            # exception on some versions of IronPython. We trap it here so that
+            # IronPython can use logging.
+            try:
+                fn, lno, func, sinfo = self.findCaller(stack_info)
+            except ValueError:  # pragma: no cover
+                fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        else:  # pragma: no cover
+            fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        if exc_info:
+            if isinstance(exc_info, BaseException):
+                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
+            elif not isinstance(exc_info, tuple):
+                exc_info = sys.exc_info()
+
+        return logging.LogRecord(
+            name=self.name,
+            level=level,
+            pathname=fn,
+            lineno=lno,
+            msg=msg,
+            args=args,
+            exc_info=exc_info,
+            func=func,
+            sinfo=sinfo,
+            extra=extra
+        )
+
+    async def _log(self,
+                   level,
+                   msg,
+                   args,
+                   exc_info=None,
+                   extra=None,
+                   stack_info=False):
+        record = self.make_log_record(level, msg, args, exc_info, extra,
+                                      stack_info)
+        await self.handle(record)
+
+    async def debug(self, msg, *args, **kwargs):
+        """
+        Log msg with severity 'DEBUG'.
+
+        To pass exception information, use the keyword argument exc_info with
+        a true value, e.g.
+
+        await logger.debug("Houston, we have a %s", "thorny problem", exc_info=1)
+        """
+        if self.isEnabledFor(logging.DEBUG):
+            await self._log(logging.DEBUG, msg, args, **kwargs)
+
+    async def info(self, msg, *args, **kwargs):
+        """
+        Log msg with severity 'INFO'.
+
+        To pass exception information, use the keyword argument exc_info with
+        a true value, e.g.
+
+        await logger.info("Houston, we have an interesting problem", exc_info=1)
+        """
+        if self.isEnabledFor(logging.INFO):
+            await self._log(logging.INFO, msg, args, **kwargs)
+
+    async def warning(self, msg, *args, **kwargs):
+        """
+        Log msg with severity 'WARNING'.
+
+        To pass exception information, use the keyword argument exc_info with
+        a true value, e.g.
+
+        await logger.warning("Houston, we have a bit of a problem", exc_info=1)
+        """
+        if self.isEnabledFor(logging.WARNING):
+            await self._log(logging.WARNING, msg, args, **kwargs)
+
+    async def error(self, msg, *args, **kwargs):
+        """
+        Log msg with severity 'ERROR'.
+
+        To pass exception information, use the keyword argument exc_info with
+        a true value, e.g.
+
+        await logger.error("Houston, we have a major problem", exc_info=1)
+        """
+        if self.isEnabledFor(logging.ERROR):
+            await self._log(logging.ERROR, msg, args, **kwargs)
+
+    async def critical(self, msg, *args, **kwargs):
+        """
+        Log msg with severity 'CRITICAL'.
+
+        To pass exception information, use the keyword argument exc_info with
+        a true value, e.g.
+
+        await logger.critical("Houston, we have a major disaster", exc_info=1)
+        """
+        if self.isEnabledFor(logging.CRITICAL):
+            await self._log(logging.CRITICAL, msg, args, **kwargs)
+
+    async def exception(self, msg, *args, exc_info=True, **kwargs):
+        """
+        Convenience method for logging an ERROR with exception information.
+        """
+        await self.error(msg, *args, exc_info=exc_info, **kwargs)
+

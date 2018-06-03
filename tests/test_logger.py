@@ -1,7 +1,10 @@
 import asyncio
 import fcntl
+import inspect
 import os
+import traceback
 from logging import LogRecord
+from typing import Tuple
 
 import asynctest
 from unittest.mock import Mock, patch
@@ -87,7 +90,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
 
 
 class LoggerTests(asynctest.TestCase):
-    def setUp(self):
+    async def setUp(self):
         r_fileno, w_fileno = os.pipe()
         self.read_pipe = os.fdopen(r_fileno, 'r')
         self.write_pipe = os.fdopen(w_fileno, 'w')
@@ -95,10 +98,22 @@ class LoggerTests(asynctest.TestCase):
         patch('aiologger.logger.sys.stdout', self.write_pipe).start()
         patch('aiologger.logger.sys.stderr', self.write_pipe).start()
 
+        self.stream_reader, self.reader_transport = await self._make_read_pipe_stream_reader()
+
     def tearDown(self):
         self.read_pipe.close()
         self.write_pipe.close()
+        self.reader_transport.close()
         patch.stopall()
+
+    async def _make_read_pipe_stream_reader(self) -> Tuple[asyncio.StreamReader,
+                                                           asyncio.ReadTransport]:
+        reader = asyncio.StreamReader(loop=self.loop)
+        protocol = asyncio.StreamReaderProtocol(reader)
+
+        transport, protocol = await self.loop.connect_read_pipe(lambda: protocol,
+                                                                self.read_pipe)
+        return reader, transport
 
     async def test_init_async_initializes_stream_writers(self):
         with patch.object(Logger, 'make_stream_writer',
@@ -213,9 +228,93 @@ class LoggerTests(asynctest.TestCase):
     async def test_it_doesnt_calls_handlers_if_record_isnt_loggable(self):
         logger = await Logger.init_async()
         with patch.object(logger, 'filter', return_value=False) as filter, \
-                asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+             asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
             await logger.handle(record)
 
             filter.assert_called_once_with(record)
             callHandlers.assert_not_awaited()
+
+    async def test_make_log_record_returns_a_log_record(self):
+        logger = await Logger.init_async()
+        record = logger.make_log_record(level=10, msg='Xablau', args=None)
+
+        self.assertIsInstance(record, LogRecord)
+        self.assertEqual(record.msg, 'Xablau')
+        self.assertEqual(record.levelno, 10)
+        self.assertEqual(record.levelname, 'DEBUG')
+
+    async def test_make_log_record_build_exc_info_from_exception(self):
+        logger = await Logger.init_async()
+        try:
+            raise ValueError("41 isn't the answer")
+        except Exception as e:
+            record = logger.make_log_record(level=10,
+                                            msg='Xablau',
+                                            args=None,
+                                            exc_info=e)
+            exc_class, exc, exc_traceback = record.exc_info
+            self.assertEqual(exc_class, ValueError)
+            self.assertEqual(exc, e)
+
+    async def test_log_makes_and_handles_a_record(self):
+        logger = await Logger.init_async()
+        with asynctest.patch.object(logger, 'handle') as handle, \
+             patch.object(logger, 'make_log_record') as make_log_record:
+
+            await logger._log(level=10, msg='Xablau', args=None)
+            handle.assert_awaited_once_with(make_log_record.return_value)
+
+    async def test_it_logs_debug_messages(self):
+        logger = await Logger.init_async()
+        await logger.debug("Xablau")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_logs_info_messages(self):
+        logger = await Logger.init_async()
+        await logger.info("Xablau")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_logs_warning_messages(self):
+        logger = await Logger.init_async()
+        await logger.warning("Xablau")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_logs_error_messages(self):
+        logger = await Logger.init_async()
+        await logger.error("Xablau")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_logs_critical_messages(self):
+        logger = await Logger.init_async()
+        await logger.critical("Xablau")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_logs_exception_messages(self):
+        logger = await Logger.init_async()
+
+        try:
+            raise Exception('Xablau')
+        except Exception:
+            await logger.exception("Batemos tambores, eles panela.")
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Batemos tambores, eles panela.\n")
+
+        while self.stream_reader._buffer:
+            logged_content += await self.stream_reader.readline()
+
+        current_func_name = inspect.currentframe().f_code.co_name
+
+        self.assertIn(current_func_name.encode(), logged_content)
+        self.assertIn(b"raise Exception('Xablau')", logged_content)
