@@ -7,7 +7,7 @@ from aiologger.protocols import AiologgerProtocol
 
 class Logger(logging.Logger):
     def __init__(self, *,
-                 name='default-logger',
+                 name='aiologger',
                  level=logging.NOTSET,
                  loop=None):
         super(Logger, self).__init__(name, level)
@@ -15,7 +15,7 @@ class Logger(logging.Logger):
 
     @classmethod
     async def with_default_handlers(cls, *,
-                                    name='logger',
+                                    name='aiologger',
                                     level=logging.NOTSET,
                                     formatter: logging.Formatter=None,
                                     loop=None):
