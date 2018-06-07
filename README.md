@@ -7,7 +7,7 @@
 
 
 The builtin python logger is IO blocking. This means that using the builting 
-`logging` module may interfere  `aiologger` aims to be the Asynchronous non blocking logging for python and asyncio. 
+`logging` module will interfere with your asynchronouns application performance. `aiologger` aims to be the standard Asynchronous non blocking logging for python and asyncio. 
 
 ## Installation
 
