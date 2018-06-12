@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 import os
 from logging import LogRecord
 from typing import Tuple
@@ -9,7 +10,6 @@ from unittest.mock import Mock, patch
 
 from asynctest import CoroutineMock
 
-from aiologger.handlers import AsyncStreamHandler
 from aiologger.logger import Logger
 
 
@@ -42,8 +42,22 @@ class LoggerTests(asynctest.TestCase):
     async def test_init_with_default_handlers_initializes_handlers_for_stdout_and_stderr(self):
         handlers = [Mock(), Mock()]
         with asynctest.patch('aiologger.logger.AsyncStreamHandler.init_from_pipe',
-                             CoroutineMock(side_effect=handlers)):
+                             CoroutineMock(side_effect=handlers)) as init_from_pipe:
 
+            logger = await Logger.with_default_handlers(loop=self.loop)
+            self.assertCountEqual(logger.handlers, handlers)
+
+            self.assertCountEqual(
+                [logging.DEBUG, logging.WARNING],
+                [call[1]['level'] for call in init_from_pipe.await_args_list]
+            )
+
+    async def test_init_with_default_handlers_initializes_handlers_with_proper_log_levels(
+            self):
+        handlers = [Mock(), Mock()]
+        with asynctest.patch(
+                'aiologger.logger.AsyncStreamHandler.init_from_pipe',
+                CoroutineMock(side_effect=handlers)) as init_from_pipe:
             logger = await Logger.with_default_handlers()
             self.assertCountEqual(logger.handlers, handlers)
 
