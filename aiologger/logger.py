@@ -26,7 +26,7 @@ class Logger(logging.Logger):
 
         stdout_handler = await AsyncStreamHandler.init_from_pipe(
             pipe=sys.stdout,
-            level=level,
+            level=logging.DEBUG,
             protocol_factory=AiologgerProtocol,
             formatter=formatter,
             filter=StdoutFilter(),
@@ -34,7 +34,7 @@ class Logger(logging.Logger):
 
         stderr_handler = await AsyncStreamHandler.init_from_pipe(
             pipe=sys.stderr,
-            level=level,
+            level=logging.WARNING,
             protocol_factory=AiologgerProtocol,
             formatter=formatter,
             loop=loop)
@@ -214,4 +214,3 @@ class Logger(logging.Logger):
                 as we're shutting down
                 """
                 pass
-
