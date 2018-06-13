@@ -28,7 +28,7 @@ class JsonFormatter(logging.Formatter):
             tb = ''.join(traceback.format_tb(obj))
             return tb.strip().split('\n')
         elif isinstance(obj, Exception):
-            return "Exception: %s" % str(obj)
+            return "Exception: %s" % repr(obj)
         elif callable(obj):
             return obj()
         return str(obj)
