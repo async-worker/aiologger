@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from logging import LogRecord
 
 from aiologger.formatters.json import JsonFormatter
@@ -47,3 +48,37 @@ class JsonFormatterTests(unittest.TestCase):
                 'dog': 'Xablau'
             })
         )
+
+
+class DefaultHandlerTests(unittest.TestCase):
+    def setUp(self):
+        self.formatter = JsonFormatter()
+
+    def test_it_converts_datetime_objects_to_strings(self):
+        obj = datetime(
+            year=2006,
+            month=6,
+            day=6,
+            hour=6,
+            minute=6,
+            second=6,
+            microsecond=666666
+        )
+        result = self.formatter._default_handler(obj)
+        self.assertEqual(result, '2006-06-06T06:06:06.666666')
+
+    def test_it_converts_exceptions_to_strings(self):
+        obj = KeyError("Xablau")
+        result = self.formatter._default_handler(obj)
+        self.assertEqual(result, "Exception: KeyError('Xablau',)")
+
+    def test_it_calls_callable_objects_and_returns_its_return_value(self):
+        obj = lambda: "Xablau"
+        result = self.formatter._default_handler(obj)
+        self.assertEqual(result, "Xablau")
+
+    def test_it_typecasts_object_to_string_if_type_doesnt_match_anything(self):
+        obj = 4.2
+        result = self.formatter._default_handler(obj)
+        self.assertEqual(result, "4.2")
+
