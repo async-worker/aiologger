@@ -69,7 +69,7 @@ class JsonLogger(Logger):
                         extra=None,
                         stack_info=False,
                         flatten=False,
-                        serializer_kwargs={}):
+                        serializer_kwargs=None):
         sinfo = None
         if logging._srcfile:
             # IronPython doesn't track Python frames, so findCaller raises an
