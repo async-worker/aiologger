@@ -7,12 +7,17 @@ from typing import Callable, Any
 
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
+LOGGED_AT_FIELDNAME = 'logged_at'
+LINE_NUMBER_FIELDNAME = 'line_number'
+FUNCTION_NAME_FIELDNAME = 'function'
+LOG_LEVEL_FIELDNAME = 'level'
 MSG_FIELDNAME = 'msg'
+FILE_PATH_FIELDNAME = 'file_path'
 
 
 class JsonFormatter(logging.Formatter):
     def __init__(self,
-                 serializer: Callable[[Any], str] = json.dumps,
+                 serializer: Callable[..., str] = json.dumps,
                  default_msg_fieldname: str = None,
                  datetime_format: str = None):
         super(JsonFormatter, self).__init__()
@@ -49,3 +54,74 @@ class JsonFormatter(logging.Formatter):
             msg['exc_text'] = record.exc_text
 
         return self.serializer(msg, default=self._default_handler)
+
+
+class ExtendedJsonFormatter(JsonFormatter):
+    level_to_name_mapping = logging._levelToName
+    default_fields = frozenset([
+        LOG_LEVEL_FIELDNAME,
+        LOGGED_AT_FIELDNAME,
+        LINE_NUMBER_FIELDNAME,
+        FUNCTION_NAME_FIELDNAME,
+        FILE_PATH_FIELDNAME
+    ])
+
+    def __init__(self,
+                 serializer: Callable[..., str] = json.dumps,
+                 default_msg_fieldname: str = None,
+                 datetime_format: str = None,
+                 exclude_fields=None):
+        """
+        :type serializer: Callable[[Dict], str]
+        :type exclude_fields: Iterable[str]
+        """
+        super(ExtendedJsonFormatter, self).__init__(
+            serializer=serializer,
+            default_msg_fieldname=default_msg_fieldname,
+            datetime_format=datetime_format
+        )
+        self.serializer = serializer
+        if exclude_fields is None:
+            self.log_fields = self.default_fields
+        else:
+            self.log_fields = self.default_fields - set(exclude_fields)
+
+    def formatter_fields_for_record(self, record):
+        """
+        :type record: aiologger.loggers.json.LogRecord
+        """
+        default_fields = (
+            (LOGGED_AT_FIELDNAME, datetime.now().strftime(DATETIME_FORMAT)),
+            (LINE_NUMBER_FIELDNAME, record.lineno),
+            (FUNCTION_NAME_FIELDNAME, record.funcName),
+            (LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),
+            (FILE_PATH_FIELDNAME, record.pathname)
+        )
+
+        for field, value in default_fields:
+            if field in self.log_fields:
+                yield field, value
+
+    def format(self, record):
+        """
+        :type record: aiologger.loggers.json.LogRecord
+        """
+        msg = dict(self.formatter_fields_for_record(record))
+        if record.flatten:
+            if isinstance(record.msg, dict):
+                msg.update(record.msg)
+            else:
+                msg[MSG_FIELDNAME] = record.msg
+        else:
+            msg[MSG_FIELDNAME] = record.msg
+
+        if record.extra:
+            msg.update(record.extra)
+        if record.exc_info:
+            msg['exc_info'] = record.exc_info
+        if record.exc_text:
+            msg['exc_text'] = record.exc_text
+
+        return self.serializer(msg,
+                               default=self._default_handler,
+                               **record.serializer_kwargs)
