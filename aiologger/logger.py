@@ -18,9 +18,11 @@ class Logger(logging.Logger):
                                     name='aiologger',
                                     level=logging.NOTSET,
                                     formatter: logging.Formatter=None,
-                                    loop=None):
-        if formatter is None:
-            formatter = logging.Formatter()
+                                    loop=None,
+                                    **kwargs):
+        self = cls(name=name, level=level, **kwargs)
+
+        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
 
         stdout_handler = await AsyncStreamHandler.init_from_pipe(
             pipe=sys.stdout,
@@ -36,8 +38,6 @@ class Logger(logging.Logger):
             protocol_factory=AiologgerProtocol,
             formatter=formatter,
             loop=loop)
-
-        self = cls(name=name, level=level)
 
         self.addHandler(stdout_handler)
         self.addHandler(stderr_handler)
@@ -214,3 +214,4 @@ class Logger(logging.Logger):
                 as we're shutting down
                 """
                 pass
+
