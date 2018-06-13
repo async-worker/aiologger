@@ -18,7 +18,7 @@ setup(
         'Intended Audience :: Information Technology',
         'Natural Language :: English',
         'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Unix'
+        'Operating System :: Unix',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Topic :: System :: Logging'
