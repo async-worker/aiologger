@@ -32,7 +32,8 @@ class JsonLogger(Logger):
         super().__init__(name=name, level=level, loop=loop)
         self.serializer = serializer
         self.flatten = flatten
-        self.formatter = ExtendedJsonFormatter(self.serializer, exclude_fields)
+        self.formatter = ExtendedJsonFormatter(serializer=self.serializer,
+                                               exclude_fields=exclude_fields)
 
         if serializer_kwargs is None:
             serializer_kwargs = {}
