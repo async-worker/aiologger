@@ -74,12 +74,12 @@ async def main():
         'exceptions': KeyError("Boooom"),
         'types': JsonLogger
     })
+    # {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'aiologger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 loop.close()
 
->>> {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'aiologger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 ```
 
 `Callable[[], str]` log values may also be used to generate dynamic content that
@@ -129,10 +129,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info("I'm a simple log")
-    >>> {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 5, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 5, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info("I'm a simple log", extra=locals())
-    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "DEBUG", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "logger": "<JsonLogger aiologger-json (INFO)>", "c": [69, 666], "b": 666, "a": 69}
+    # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "DEBUG", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "logger": "<JsonLogger aiologger-json (INFO)>", "c": [69, 666], "b": 666, "a": 69}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -150,10 +150,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info("I'm a simple log")
-    >>> {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info("I'm a simple log", extra={'logged_at': 'Yesterday'})
-    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -171,10 +171,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10, extra={'logged_at': 'Yesterday'})
 
     await logger.info("I'm a simple log")
-    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info("I'm a simple log")
-    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -197,10 +197,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10, flatten=True)
 
     await logger.info({"status_code": 200, "response_time": 0.00534534})
-    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446985", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446985", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
-    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446986", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446986", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -218,10 +218,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info({"status_code": 200, "response_time": 0.00534534}, flatten=True)
-    >>> {"logged_at": "2017-08-11T16:23:16.312441", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "status_code": 200, "response_time": 0.00534534}
+    # {"logged_at": "2017-08-11T16:23:16.312441", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "status_code": 200, "response_time": 0.00534534}
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
-    >>> {"logged_at": "2017-08-11T16:23:16.312618", "line_number": 8, "function": "<module>", "level": "ERROR", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "msg": {"status_code": 404, "response_time": 0.00134534}}
+    # {"logged_at": "2017-08-11T16:23:16.312618", "line_number": 8, "function": "<module>", "level": "ERROR", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "msg": {"status_code": 404, "response_time": 0.00134534}}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -239,11 +239,90 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info({'logged_at': 'Yesterday'}, flatten=True)
-    >>> {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    # {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 loop.close()
+```
+
+#### Exclude default logger fields
+
+If you think that the default fields are too much, it's also possible to 
+exclude fields from the output message. 
+
+```python
+import asyncio
+from aiologger.loggers.json import JsonLogger
+from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, LOGGED_AT_FIELDNAME
+
+
+async def main():
+    logger = await JsonLogger.with_default_handlers(
+        level=10,
+        exclude_fields=[FUNCTION_NAME_FIELDNAME,
+                        LOGGED_AT_FIELDNAME,
+                        'file_path',
+                        'line_number']
+    )
+
+    await logger.info("Function, file path and line number wont be printed")
+    # {"level": "INFO", "msg": "Function, file path and line number wont be printed"}
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
+
+### Serializer options
+
+`serializer_kwargs` is available both as instance attribute and as
+a log method parameter and may be used to pass keyword arguments to the
+`serializer` function. (See more: https://docs.python.org/3/library/json.html)
+
+For pretty printing the output, you may use the `indent` kwarg. Ex.:
+
+```python
+import asyncio
+from aiologger.loggers.json import JsonLogger
+
+
+async def main():
+    logger = await JsonLogger.with_default_handlers(
+        level=10,
+        serializer_kwargs={'indent': 4}
+    )
+
+    await logger.info({'logged_at': 'Yesterday'})
+    # {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
+
+Would result in a pretty indented output:
+
+``` javascript
+{
+    "logged_at": "2017-08-11T21:04:21.559070",
+    "line_number": 5,
+    "function": "<module>",
+    "level": "INFO",
+    "file_path": "/Users/diogo/Library/Preferences/PyCharm2017.1/scratches/scratch_32.py",
+    "msg": {
+        "artist": "Black Country Communion",
+        "song": "Cold"
+    }
+}
+```
+
+The same result can be achieved making a log call with `serializer_kwargs`
+as a parameter.
+
+
+```python
+await logger.warning({'artist': 'Black Country Communion', 'song': 'Cold'}, serializer_kwargs={'indent': 4})
 ```
 
 ## Formatters
