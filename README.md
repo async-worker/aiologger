@@ -20,7 +20,7 @@ pip install aiologger
 # Testing 
 
 ```
-pip install -r requirements-dev.txt
+pipenv install --dev
 py.test
 ```
 
