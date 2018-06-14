@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1.0-rc2'
+VERSION = '0.1.0-rc3'
 setup(
     name='aiologger',
     version=VERSION,
