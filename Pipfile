@@ -4,12 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+
+[dev-packages]
 pytest = "*"
 pytest-cov = "*"
 codecov = "*"
 asynctest = "==0.12.0"
-
-[dev-packages]
+freezegun = "==0.3.10"
 
 [requires]
 python_version = "3.6"
