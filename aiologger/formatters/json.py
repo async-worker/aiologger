@@ -80,7 +80,6 @@ class ExtendedJsonFormatter(JsonFormatter):
             default_msg_fieldname=default_msg_fieldname,
             datetime_format=datetime_format
         )
-        self.serializer = serializer
         if exclude_fields is None:
             self.log_fields = self.default_fields
         else:
@@ -102,16 +101,13 @@ class ExtendedJsonFormatter(JsonFormatter):
             if field in self.log_fields:
                 yield field, value
 
-    def format(self, record):
+    def format(self, record) -> str:
         """
         :type record: aiologger.loggers.json.LogRecord
         """
         msg = dict(self.formatter_fields_for_record(record))
-        if record.flatten:
-            if isinstance(record.msg, dict):
-                msg.update(record.msg)
-            else:
-                msg[MSG_FIELDNAME] = record.msg
+        if record.flatten and isinstance(record.msg, dict):
+            msg.update(record.msg)
         else:
             msg[MSG_FIELDNAME] = record.msg
 
