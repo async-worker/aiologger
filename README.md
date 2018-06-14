@@ -2,8 +2,8 @@
 
 [![PYPI](https://img.shields.io/pypi/v/aiologger.svg)](http://pypi.python.org/pypi/aiologger)
 [![PYPI Python Versions](https://img.shields.io/pypi/pyversions/aiologger.svg)](http://pypi.python.org/pypi/aiologger)
-[![Build Status](https://travis-ci.org/diogommartins/aiologger.svg?branch=master)](https://travis-ci.org/diogommartins/aiologger)
-[![codecov](https://codecov.io/gh/diogommartins/aiologger/branch/master/graph/badge.svg)](https://codecov.io/gh/diogommartins/aiologger)
+[![Build Status](https://travis-ci.org/B2W-BIT/aiologger.svg?branch=master)](https://travis-ci.org/B2W-BIT/aiologger)
+[![codecov](https://codecov.io/gh/B2W-BIT/aiologger/branch/master/graph/badge.svg)](https://codecov.io/gh/B2W-BIT/aiologger)
 
 
 The builtin python logger is IO blocking. This means that using the builting 
