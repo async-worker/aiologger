@@ -79,7 +79,7 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 loop.close()
 
->>> {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'simple_json_logger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+>>> {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'aiologger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 ```
 
 `Callable[[], str]` log values may also be used to generate dynamic content that
@@ -197,10 +197,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10, flatten=True)
 
     await logger.info({"status_code": 200, "response_time": 0.00534534})
-    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446985", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/simple_json_logger/bla.py"}
+    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446985", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
-    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446986", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/simple_json_logger/bla.py"}
+    >>> {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446986", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -218,10 +218,10 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info({"status_code": 200, "response_time": 0.00534534}, flatten=True)
-    >>> {"logged_at": "2017-08-11T16:23:16.312441", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/simple_json_logger/bla.py", "status_code": 200, "response_time": 0.00534534}
+    >>> {"logged_at": "2017-08-11T16:23:16.312441", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "status_code": 200, "response_time": 0.00534534}
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
-    >>> {"logged_at": "2017-08-11T16:23:16.312618", "line_number": 8, "function": "<module>", "level": "ERROR", "path": "/Users/diogo/PycharmProjects/simple_json_logger/bla.py", "msg": {"status_code": 404, "response_time": 0.00134534}}
+    >>> {"logged_at": "2017-08-11T16:23:16.312618", "line_number": 8, "function": "<module>", "level": "ERROR", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "msg": {"status_code": 404, "response_time": 0.00134534}}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -239,7 +239,7 @@ async def main():
     logger = await JsonLogger.with_default_handlers(level=10)
 
     await logger.info({'logged_at': 'Yesterday'}, flatten=True)
-    >>> {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/simple_json_logger/bla.py"}
+    >>> {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
