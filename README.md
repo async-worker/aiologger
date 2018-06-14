@@ -9,20 +9,20 @@
 The builtin python logger is IO blocking. This means that using the builting 
 `logging` module will interfere with your asynchronouns application performance. `aiologger` aims to be the standard Asynchronous non blocking logging for python and asyncio. 
 
-## Installation
+# Installation
 
 ```
 pip install aiologger
 ``` 
 
-## Testing 
+# Testing 
 
 ```
 pip install -r requirements-dev.txt
 py.test
 ```
 
-## Usage
+# Usage
 
 The most basic use case is to log the output into `stdout` and `stderr`. 
 Using `Logger.with_default_handlers` you're able to effortlessly create a new
@@ -51,14 +51,14 @@ loop.close()
 
 ```
 
-## Loggers
+# Loggers
 
-### JsonLogger
+## JsonLogger
 
 A simple, featureful, drop-in replacement to the default `aiologger.Logger` 
 that grants to always log valid, single line, JSON output.
 
-#### It logs everything
+### It logs everything
 
 ``` python
 import asyncio
@@ -79,7 +79,7 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 loop.close()
 
->>> {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'simple_json_logger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Volumes/partition2/Users/diogo/PycharmProjects/simple_json_logger/bla.py"}
+>>> {"msg": {"date_objects": "2017-03-31T03:17:33.898880", "exceptions": "Exception: 'Boooom'", "types": "<class 'simple_json_logger.logger.JsonLogger'>"}, "logged_at": "2017-03-31T03:17:33.900136", "line_number": 8, "function": "<module>", "level": "INFO", "file_path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
 ```
 
 `Callable[[], str]` log values may also be used to generate dynamic content that
@@ -93,7 +93,7 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(extra={"random_number": lambda: randint(1, 100)})
+    logger = await JsonLogger.with_default_handlers(level=10, extra={"random_number": lambda: randint(1, 100)})
     
     await logger.info("First log line")
     # {"logged_at": "2018-02-06T13:55:35.439355", "line_number": 1, "function": "<module>", "level": "INFO", "file_path": "<input>", "msg": "First log line", "random_number": 6}
@@ -106,6 +106,80 @@ loop.run_until_complete(main())
 loop.close()
 
 ``` 
+
+###  Adding content to root
+
+By default, everything passed to the log methods is inserted inside
+the `msg` root attribute, but sometimes we want to add content to the root level.
+For this, we may use the `extra` or `flatten` parameters.
+
+#### Extra
+
+The `extra` parameter also allow you to override the default root content:
+
+```python
+import asyncio
+from aiologger.loggers.json import JsonLogger
+
+
+async def main():
+    a = 69
+    b = 666
+    c = [a, b]
+    logger = await JsonLogger.with_default_handlers(level=10)
+
+    await logger.info("I'm a simple log")
+    >>> {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 5, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.info("I'm a simple log", extra=locals())
+    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "DEBUG", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "logger": "<JsonLogger aiologger-json (INFO)>", "c": [69, 666], "b": 666, "a": 69}
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
+
+The `extra` parameter also allow you to override the default root content:
+
+```python
+import asyncio
+from aiologger.loggers.json import JsonLogger
+
+
+async def main():
+    logger = await JsonLogger.with_default_handlers(level=10)
+
+    await logger.info("I'm a simple log")
+    >>> {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.info("I'm a simple log", extra={'logged_at': 'Yesterday'})
+    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
+
+and it may also be used as an instance attribute:
+
+```python
+import asyncio
+from aiologger.loggers.json import JsonLogger
+
+
+async def main():
+    logger = await JsonLogger.with_default_handlers(level=10, extra={'logged_at': 'Yesterday'})
+
+    await logger.info("I'm a simple log")
+    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.info("I'm a simple log")
+    >>> {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
 
 
 ## Formatters
