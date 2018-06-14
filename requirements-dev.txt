@@ -1,4 +1,0 @@
-pytest
-pytest-cov
-codecov
-asynctest==0.12.0
