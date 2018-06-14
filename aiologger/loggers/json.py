@@ -64,15 +64,21 @@ class JsonLogger(Logger):
             exclude_fields=exclude_fields
         )
 
-    def make_log_record(self,
-                        level: int,
-                        msg: Any,
-                        args: Tuple,
-                        exc_info=None,
-                        extra=None,
-                        stack_info=False,
-                        flatten: bool=False,
-                        serializer_kwargs: Dict=None):
+    async def _log(self,
+                   level: int,
+                   msg: Any,
+                   args: Tuple,
+                   exc_info=None,
+                   extra: Dict=None,
+                   stack_info=False,
+                   flatten: bool=False,
+                   serializer_kwargs: Dict=None):
+        """
+        Low-level logging routine which creates a LogRecord and then calls
+        all the handlers of this logger to handle the record.
+
+        Overwritten to properly handle log methods kwargs
+        """
         sinfo = None
         if logging._srcfile:
             # IronPython doesn't track Python frames, so findCaller raises an
@@ -96,7 +102,7 @@ class JsonLogger(Logger):
         if extra:
             joined_extra.update(extra)
 
-        return LogRecord(
+        record = LogRecord(
             name=self.name,
             level=level,
             pathname=fn,
@@ -110,22 +116,4 @@ class JsonLogger(Logger):
             flatten=flatten or self.flatten,
             serializer_kwargs=serializer_kwargs or self.serializer_kwargs
         )
-
-    async def _log(self,
-                   level: int,
-                   msg: Any,
-                   args: Tuple,
-                   exc_info=None,
-                   extra: Dict=None,
-                   stack_info=False,
-                   flatten: bool=False,
-                   serializer_kwargs: Dict=None):
-        """
-        Low-level logging routine which creates a LogRecord and then calls
-        all the handlers of this logger to handle the record.
-
-        Overwritten to properly handle log methods kwargs
-        """
-        record = self.make_log_record(level, msg, args, exc_info, extra,
-                                      stack_info, flatten, serializer_kwargs)
         await self.handle(record)

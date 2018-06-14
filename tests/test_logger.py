@@ -158,26 +158,21 @@ class LoggerTests(asynctest.TestCase):
         self.assertEqual(record.levelno, 10)
         self.assertEqual(record.levelname, 'DEBUG')
 
-    async def test_make_log_record_build_exc_info_from_exception(self):
+    async def test_log_makes_a_record_with_build_exc_info_from_exception(self):
         logger = await Logger.with_default_handlers()
         try:
             raise ValueError("41 isn't the answer")
         except Exception as e:
-            record = logger.make_log_record(level=10,
-                                            msg='Xablau',
-                                            args=None,
-                                            exc_info=e)
-            exc_class, exc, exc_traceback = record.exc_info
-            self.assertEqual(exc_class, ValueError)
-            self.assertEqual(exc, e)
-
-    async def test_log_makes_and_handles_a_record(self):
-        logger = await Logger.with_default_handlers()
-        with asynctest.patch.object(logger, 'handle') as handle, \
-             patch.object(logger, 'make_log_record') as make_log_record:
-
-            await logger._log(level=10, msg='Xablau', args=None)
-            handle.assert_awaited_once_with(make_log_record.return_value)
+            with patch.object(logger, 'handle', CoroutineMock()) as handle:
+                await logger._log(level=10,
+                                  msg='Xablau',
+                                  args=None,
+                                  exc_info=e)
+                call = handle.await_args_list.pop()
+                record: LogRecord = call[0][0]
+                exc_class, exc, exc_traceback = record.exc_info
+                self.assertEqual(exc_class, ValueError)
+                self.assertEqual(exc, e)
 
     async def test_it_logs_debug_messages(self):
         logger = await Logger.with_default_handlers()

@@ -1,11 +1,10 @@
 import asyncio
-import logging
 import json
 import inspect
 import os
 from datetime import datetime
 from typing import Tuple
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import asynctest
 
@@ -27,7 +26,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.stream_reader, self.reader_transport = await self._make_read_pipe_stream_reader()
         self.logger = await JsonLogger.with_default_handlers(level=10)
 
-    def tearDown(self):
+    async def tearDown(self):
         # self.read_pipe.close()
         self.write_pipe.close()
         self.reader_transport.close()
@@ -91,6 +90,14 @@ class JsonLoggerTests(asynctest.TestCase):
         json_log = json.loads(logged_content)
 
         self.assertEqual(json_log['logged_at'], now)
+
+    async def test_it_logs_current_function_name(self):
+        await self.logger.error("Batemos tambores, eles panela.")
+
+        logged_content = await self.stream_reader.readline()
+        json_log = json.loads(logged_content)
+        self.assertEqual(json_log['function'],
+                         'test_it_logs_current_function_name')
 
     async def test_it_logs_exceptions_tracebacks(self):
         exception_message = "Carros importados pra garantir os translados"
