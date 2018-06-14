@@ -10,7 +10,7 @@ class JsonFormatterTests(unittest.TestCase):
         self.record = LogRecord(
             level=30,
             name='aiologger',
-            pathname="/aiologger/tests/formatters/test_json.py",
+            pathname="/aiologger/tests/formatters/test_json_formatter.py",
             lineno=42,
             msg="Xablau",
             exc_info=None,
@@ -81,4 +81,3 @@ class DefaultHandlerTests(unittest.TestCase):
         obj = 4.2
         result = self.formatter._default_handler(obj)
         self.assertEqual(result, "4.2")
-
