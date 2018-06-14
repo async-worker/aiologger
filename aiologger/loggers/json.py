@@ -1,6 +1,8 @@
 import json
 import logging
 import sys
+from asyncio import AbstractEventLoop
+from typing import Dict, Iterable, Callable, Tuple, Any
 
 from aiologger import Logger
 from aiologger.formatters.json import ExtendedJsonFormatter
@@ -18,14 +20,14 @@ class LogRecord(logging.LogRecord):
 
 class JsonLogger(Logger):
     def __init__(self,
-                 name='aiologger-json',
-                 level=logging.DEBUG,
-                 serializer=json.dumps,
-                 flatten=False,
-                 serializer_kwargs=None,
-                 extra=None,
-                 exclude_fields=None,
-                 loop=None):
+                 name: str='aiologger-json',
+                 level: int=logging.DEBUG,
+                 serializer: Callable[..., str]=json.dumps,
+                 flatten: bool=False,
+                 serializer_kwargs: Dict=None,
+                 extra: Dict=None,
+                 exclude_fields: Iterable[str]=None,
+                 loop: AbstractEventLoop=None):
 
         super().__init__(name=name, level=level, loop=loop)
         self.serializer = serializer
@@ -42,14 +44,14 @@ class JsonLogger(Logger):
 
     @classmethod
     async def with_default_handlers(cls, *,
-                                    name='aiologger-json',
-                                    level=logging.NOTSET,
-                                    loop=None,
-                                    serializer=json.dumps,
-                                    flatten=False,
-                                    serializer_kwargs=None,
-                                    extra=None,
-                                    exclude_fields=None):
+                                    name: str='aiologger-json',
+                                    level: int=logging.NOTSET,
+                                    serializer: Callable[..., str]=json.dumps,
+                                    flatten: bool=False,
+                                    serializer_kwargs: Dict=None,
+                                    extra: Dict=None,
+                                    exclude_fields: Iterable[str]=None,
+                                    loop: AbstractEventLoop=None):
         return await super(JsonLogger, cls).with_default_handlers(
             name='aiologger-json',
             level=level,
@@ -62,14 +64,14 @@ class JsonLogger(Logger):
         )
 
     def make_log_record(self,
-                        level,
-                        msg,
-                        args,
+                        level: int,
+                        msg: Any,
+                        args: Tuple,
                         exc_info=None,
                         extra=None,
                         stack_info=False,
-                        flatten=False,
-                        serializer_kwargs=None):
+                        flatten: bool=False,
+                        serializer_kwargs: Dict=None):
         sinfo = None
         if logging._srcfile:
             # IronPython doesn't track Python frames, so findCaller raises an
@@ -109,14 +111,14 @@ class JsonLogger(Logger):
         )
 
     async def _log(self,
-                   level,
-                   msg,
-                   args,
+                   level: int,
+                   msg: Any,
+                   args: Tuple,
                    exc_info=None,
-                   extra=None,
+                   extra: Dict=None,
                    stack_info=False,
-                   flatten=False,
-                   serializer_kwargs={}):
+                   flatten: bool=False,
+                   serializer_kwargs: Dict=None):
         """
         Low-level logging routine which creates a LogRecord and then calls
         all the handlers of this logger to handle the record.

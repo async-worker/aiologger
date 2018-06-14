@@ -3,7 +3,7 @@ import logging
 import traceback
 from datetime import datetime
 from inspect import istraceback
-from typing import Callable, Any
+from typing import Callable, Iterable
 
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
@@ -70,11 +70,8 @@ class ExtendedJsonFormatter(JsonFormatter):
                  serializer: Callable[..., str] = json.dumps,
                  default_msg_fieldname: str = None,
                  datetime_format: str = None,
-                 exclude_fields=None):
-        """
-        :type serializer: Callable[[Dict], str]
-        :type exclude_fields: Iterable[str]
-        """
+                 exclude_fields: Iterable[str]=None):
+
         super(ExtendedJsonFormatter, self).__init__(
             serializer=serializer,
             default_msg_fieldname=default_msg_fieldname,
