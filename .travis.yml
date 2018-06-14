@@ -1,7 +1,6 @@
 language: python
 python:
   - "3.6"
-  - "nightly"
 install: "pip install -r requirements-dev.txt"
 script: py.test -v --cov=./
 after_success:
