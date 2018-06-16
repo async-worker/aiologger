@@ -4,9 +4,11 @@ import traceback
 from datetime import datetime
 from inspect import istraceback
 from typing import Callable, Iterable
+from datetime import timezone
 
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
+DATETIME_FORMAT_TZ_PART = '%z'
 LOGGED_AT_FIELDNAME = 'logged_at'
 LINE_NUMBER_FIELDNAME = 'line_number'
 FUNCTION_NAME_FIELDNAME = 'function'
@@ -70,13 +72,15 @@ class ExtendedJsonFormatter(JsonFormatter):
                  serializer: Callable[..., str] = json.dumps,
                  default_msg_fieldname: str = None,
                  datetime_format: str = None,
-                 exclude_fields: Iterable[str]=None):
+                 exclude_fields: Iterable[str]=None,
+                 tz: timezone = None):
 
         super(ExtendedJsonFormatter, self).__init__(
             serializer=serializer,
             default_msg_fieldname=default_msg_fieldname,
             datetime_format=datetime_format
         )
+        self.tz = tz
         if exclude_fields is None:
             self.log_fields = self.default_fields
         else:
@@ -86,8 +90,18 @@ class ExtendedJsonFormatter(JsonFormatter):
         """
         :type record: aiologger.loggers.json.LogRecord
         """
+        datetime_fmt = DATETIME_FORMAT
+        current_localtime = datetime.now(timezone.utc).astimezone()
+        datetime_serialized = ""
+
+        if self.tz is not None:
+            datetime_fmt = f"{DATETIME_FORMAT}{DATETIME_FORMAT_TZ_PART}"
+            datetime_serialized = current_localtime.replace(tzinfo=self.tz).strftime(datetime_fmt)
+        else:
+            datetime_serialized = current_localtime.strftime(datetime_fmt)
+
         default_fields = (
-            (LOGGED_AT_FIELDNAME, datetime.now().strftime(DATETIME_FORMAT)),
+            (LOGGED_AT_FIELDNAME, datetime_serialized),
             (LINE_NUMBER_FIELDNAME, record.lineno),
             (FUNCTION_NAME_FIELDNAME, record.funcName),
             (LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),

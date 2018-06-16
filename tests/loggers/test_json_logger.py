@@ -2,7 +2,7 @@ import asyncio
 import json
 import inspect
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Tuple
 from unittest.mock import Mock, patch
 
@@ -80,9 +80,9 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(json_log['msg'], message)
 
-    @freeze_time("2017-03-31 04:20:00")
+    @freeze_time("2017-03-31 04:20:00", tz_offset=3)
     async def test_it_logs_current_log_time(self):
-        now = datetime.now().strftime(DATETIME_FORMAT)
+        now = datetime.now(tz=timezone.utc).astimezone().strftime(DATETIME_FORMAT)
 
         await self.logger.error("Batemos tambores, eles panela.")
 
