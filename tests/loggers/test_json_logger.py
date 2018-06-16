@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timezone
 from typing import Tuple
 from unittest.mock import Mock, patch
+import time
 
 import asynctest
 
@@ -13,6 +14,8 @@ from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
     LOG_LEVEL_FIELDNAME, DATETIME_FORMAT
 from freezegun import freeze_time
 
+
+current_utc_offset = int(abs(time.localtime().tm_gmtoff / 60 / 60))
 
 class JsonLoggerTests(asynctest.TestCase):
     async def setUp(self):
@@ -80,7 +83,7 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(json_log['msg'], message)
 
-    @freeze_time("2017-03-31 04:20:00", tz_offset=3)
+    @freeze_time("2017-03-31 04:20:00", tz_offset=current_utc_offset)
     async def test_it_logs_current_log_time(self):
         now = datetime.now(tz=timezone.utc).astimezone().strftime(DATETIME_FORMAT)
 

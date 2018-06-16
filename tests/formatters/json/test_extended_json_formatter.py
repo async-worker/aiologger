@@ -2,6 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 from datetime import timezone, timedelta
+import time
 
 from aiologger.formatters.json import ExtendedJsonFormatter, \
     LOG_LEVEL_FIELDNAME, LINE_NUMBER_FIELDNAME
@@ -10,7 +11,9 @@ from aiologger.loggers.json import LogRecord
 from freezegun import freeze_time
 
 
-@freeze_time('2006-06-06T06:06:06.666666', tz_offset=3)
+current_utc_offset = int(abs(time.localtime().tm_gmtoff / 60 / 60))
+
+@freeze_time('2006-06-06T06:06:06.666666', tz_offset=current_utc_offset)
 class ExtendedJsonFormatterTests(unittest.TestCase):
     def setUp(self):
         self.formatter = ExtendedJsonFormatter()
@@ -39,7 +42,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         formatter = ExtendedJsonFormatter(exclude_fields=(LOG_LEVEL_FIELDNAME,))
         self.assertNotIn(LOG_LEVEL_FIELDNAME, formatter.log_fields)
 
-    @freeze_time('2006-06-06T06:06:06.666666', tz_offset=3)
+    @freeze_time('2006-06-06T06:06:06.666666', tz_offset=current_utc_offset)
     def test_formatter_fields_for_record_with_default_fields(self):
         result = dict(self.formatter.formatter_fields_for_record(self.record))
         self.assertEqual(
@@ -53,7 +56,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
             }
         )
 
-    @freeze_time('2018-06-16T10:16:00.742', tz_offset=3)
+    @freeze_time('2018-06-16T10:16:00.742', tz_offset=current_utc_offset)
     def test_formatter_with_tz_info_utc(self):
         """
         Check that, if tz is not None, log messages must have timezone info
