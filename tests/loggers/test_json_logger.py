@@ -85,7 +85,7 @@ class JsonLoggerTests(asynctest.TestCase):
 
     @freeze_time("2017-03-31 04:20:00", tz_offset=current_utc_offset)
     async def test_it_logs_current_log_time(self):
-        now = datetime.now(tz=timezone.utc).astimezone().strftime(DATETIME_FORMAT)
+        now = datetime.now(tz=timezone.utc).astimezone().isoformat()
 
         await self.logger.error("Batemos tambores, eles panela.")
 
