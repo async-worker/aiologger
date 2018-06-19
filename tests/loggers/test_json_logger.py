@@ -1,8 +1,9 @@
 import asyncio
 import json
 import inspect
+import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Tuple
 from unittest.mock import Mock, patch
 import time
@@ -24,7 +25,7 @@ class JsonLoggerTests(asynctest.TestCase):
         patch('aiologger.logger.sys.stderr', self.write_pipe).start()
 
         self.stream_reader, self.reader_transport = await self._make_read_pipe_stream_reader()
-        self.logger = await JsonLogger.with_default_handlers(level=10)
+        self.logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     async def tearDown(self):
         # self.read_pipe.close()
@@ -85,6 +86,20 @@ class JsonLoggerTests(asynctest.TestCase):
         now = datetime.now(tz=timezone.utc).astimezone().isoformat()
 
         await self.logger.error("Batemos tambores, eles panela.")
+
+        logged_content = await self.stream_reader.readline()
+        json_log = json.loads(logged_content)
+
+        self.assertEqual(json_log['logged_at'], now)
+
+    @freeze_time("2017-03-31T04:20:00-05:00")
+    async def test_it_logs_time_at_desired_tz(self):
+        desired_tz = timezone(timedelta(hours=-1))
+        now = datetime.now(tz=timezone.utc).astimezone(desired_tz).isoformat()
+
+
+        logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, tz=desired_tz)
+        await logger.error("Batemos tambores, eles panela.")
 
         logged_content = await self.stream_reader.readline()
         json_log = json.loads(logged_content)

@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+from datetime import timezone
 from asyncio import AbstractEventLoop
 from typing import Dict, Iterable, Callable, Tuple, Any
 
@@ -28,7 +29,7 @@ class JsonLogger(Logger):
                  extra: Dict=None,
                  exclude_fields: Iterable[str]=None,
                  loop: AbstractEventLoop=None,
-                 tz=None):
+                 tz: timezone = None):
 
         super().__init__(name=name, level=level, loop=loop)
         self.serializer = serializer
@@ -55,7 +56,7 @@ class JsonLogger(Logger):
                                     extra: Dict=None,
                                     exclude_fields: Iterable[str]=None,
                                     loop: AbstractEventLoop=None,
-                                    tz=None):
+                                    tz: timezone = None):
         return await super(JsonLogger, cls).with_default_handlers(
             name='aiologger-json',
             level=level,
