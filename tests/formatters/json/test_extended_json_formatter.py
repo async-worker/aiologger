@@ -1,6 +1,6 @@
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 from datetime import timezone, timedelta
 import time
 
@@ -10,7 +10,6 @@ from aiologger.loggers.json import LogRecord
 
 from freezegun import freeze_time
 
-@freeze_time('2006-06-06T06:06:06-03:00')
 class ExtendedJsonFormatterTests(unittest.TestCase):
     def setUp(self):
         self.formatter = ExtendedJsonFormatter()
@@ -39,13 +38,12 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         formatter = ExtendedJsonFormatter(exclude_fields=(LOG_LEVEL_FIELDNAME,))
         self.assertNotIn(LOG_LEVEL_FIELDNAME, formatter.log_fields)
 
-    @freeze_time('2006-06-06T06:06:06-03:00')
     def test_formatter_fields_for_record_with_default_fields(self):
         result = dict(self.formatter.formatter_fields_for_record(self.record))
         self.assertEqual(
             result,
             {
-                'logged_at': '2006-06-06T06:06:06-03:00',
+                'logged_at': ANY,
                 'line_number': 42,
                 'function': 'xablaufunc',
                 'level': 'WARNING',
@@ -122,7 +120,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         self.assertEqual(
             content,
             {
-                'logged_at': '2006-06-06T06:06:06-03:00',
+                'logged_at': ANY,
                 'line_number': 42,
                 'function': 'xablaufunc',
                 'level': 'WARNING',
@@ -142,7 +140,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         self.assertEqual(
             content,
             {
-                'logged_at': '2006-06-06T06:06:06-03:00',
+                'logged_at': ANY,
                 'line_number': 42,
                 'function': 'xablaufunc',
                 'level': 'WARNING',
@@ -161,7 +159,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         self.assertEqual(
             content,
             {
-                'logged_at': '2006-06-06T06:06:06-03:00',
+                'logged_at': ANY,
                 'line_number': 42,
                 'function': 'xablaufunc',
                 'level': 'WARNING',
@@ -173,7 +171,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
     def test_serialized_kwargs_record_attr_is_passed_to_instance_serialized_function(self):
         self.record.serializer_kwargs = {'indent': 2, 'sort_keys': True}
         expected_msg = {
-            'logged_at': '2006-06-06T06:06:06-03:00',
+            'logged_at': ANY,
             'line_number': 42,
             'function': 'xablaufunc',
             'level': 'WARNING',
@@ -201,7 +199,7 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         self.assertEqual(
             content,
             {
-                'logged_at': '2006-06-06T06:06:06-03:00',
+                'logged_at': ANY,
                 'line_number': 42,
                 'function': 'xablaufunc',
                 'level': 'WARNING',

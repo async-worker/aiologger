@@ -132,6 +132,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertIn(current_func_name, exc_traceback[0])
         self.assertIn('raise Exception(exception_message)', exc_traceback[1])
 
+    @freeze_time("2018-07-19T08:20:00+00:00")
     async def test_it_logs_datetime_objects(self):
         message = {
             'date': datetime.now().date(),
