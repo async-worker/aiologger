@@ -4,9 +4,9 @@ import traceback
 from datetime import datetime
 from inspect import istraceback
 from typing import Callable, Iterable
+from datetime import timezone
 
 
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 LOGGED_AT_FIELDNAME = 'logged_at'
 LINE_NUMBER_FIELDNAME = 'line_number'
 FUNCTION_NAME_FIELDNAME = 'function'
@@ -18,17 +18,15 @@ FILE_PATH_FIELDNAME = 'file_path'
 class JsonFormatter(logging.Formatter):
     def __init__(self,
                  serializer: Callable[..., str] = json.dumps,
-                 default_msg_fieldname: str = None,
-                 datetime_format: str = None):
+                 default_msg_fieldname: str = None):
         super(JsonFormatter, self).__init__()
         self.serializer = serializer
 
         self.default_msg_fieldname = default_msg_fieldname or MSG_FIELDNAME
-        self.datetime_format = datetime_format or DATETIME_FORMAT
 
     def _default_handler(self, obj):
         if isinstance(obj, datetime):
-            return obj.strftime(self.datetime_format)
+            return obj.isoformat()
         elif istraceback(obj):
             tb = ''.join(traceback.format_tb(obj))
             return tb.strip().split('\n')
@@ -69,14 +67,14 @@ class ExtendedJsonFormatter(JsonFormatter):
     def __init__(self,
                  serializer: Callable[..., str] = json.dumps,
                  default_msg_fieldname: str = None,
-                 datetime_format: str = None,
-                 exclude_fields: Iterable[str]=None):
+                 exclude_fields: Iterable[str]=None,
+                 tz: timezone = None):
 
         super(ExtendedJsonFormatter, self).__init__(
             serializer=serializer,
-            default_msg_fieldname=default_msg_fieldname,
-            datetime_format=datetime_format
+            default_msg_fieldname=default_msg_fieldname
         )
+        self.tz = tz
         if exclude_fields is None:
             self.log_fields = self.default_fields
         else:
@@ -86,8 +84,10 @@ class ExtendedJsonFormatter(JsonFormatter):
         """
         :type record: aiologger.loggers.json.LogRecord
         """
+        datetime_serialized = datetime.now(timezone.utc).astimezone(self.tz).isoformat()
+
         default_fields = (
-            (LOGGED_AT_FIELDNAME, datetime.now().strftime(DATETIME_FORMAT)),
+            (LOGGED_AT_FIELDNAME, datetime_serialized),
             (LINE_NUMBER_FIELDNAME, record.lineno),
             (FUNCTION_NAME_FIELDNAME, record.funcName),
             (LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),

@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+from datetime import timezone
 from asyncio import AbstractEventLoop
 from typing import Dict, Iterable, Callable, Tuple, Any
 
@@ -27,13 +28,15 @@ class JsonLogger(Logger):
                  serializer_kwargs: Dict=None,
                  extra: Dict=None,
                  exclude_fields: Iterable[str]=None,
-                 loop: AbstractEventLoop=None):
+                 loop: AbstractEventLoop=None,
+                 tz: timezone = None):
 
         super().__init__(name=name, level=level, loop=loop)
         self.serializer = serializer
         self.flatten = flatten
         self.formatter = ExtendedJsonFormatter(serializer=self.serializer,
-                                               exclude_fields=exclude_fields)
+                                               exclude_fields=exclude_fields,
+                                                tz=tz)
 
         if serializer_kwargs is None:
             serializer_kwargs = {}
@@ -52,7 +55,8 @@ class JsonLogger(Logger):
                                     serializer_kwargs: Dict=None,
                                     extra: Dict=None,
                                     exclude_fields: Iterable[str]=None,
-                                    loop: AbstractEventLoop=None):
+                                    loop: AbstractEventLoop=None,
+                                    tz: timezone = None):
         return await super(JsonLogger, cls).with_default_handlers(
             name='aiologger-json',
             level=level,
@@ -61,7 +65,8 @@ class JsonLogger(Logger):
             flatten=flatten,
             serializer_kwargs=serializer_kwargs,
             extra=extra,
-            exclude_fields=exclude_fields
+            exclude_fields=exclude_fields,
+            tz=tz
         )
 
     async def _log(self,
