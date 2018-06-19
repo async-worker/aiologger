@@ -14,9 +14,6 @@ from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
     LOG_LEVEL_FIELDNAME, DATETIME_FORMAT
 from freezegun import freeze_time
 
-
-current_utc_offset = int(abs(time.localtime().tm_gmtoff / 60 / 60))
-
 class JsonLoggerTests(asynctest.TestCase):
     async def setUp(self):
         r_fileno, w_fileno = os.pipe()
@@ -83,7 +80,7 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(json_log['msg'], message)
 
-    @freeze_time("2017-03-31 04:20:00", tz_offset=current_utc_offset)
+    @freeze_time("2017-03-31T04:20:00-06:00")
     async def test_it_logs_current_log_time(self):
         now = datetime.now(tz=timezone.utc).astimezone().isoformat()
 
