@@ -1,18 +1,19 @@
 import asyncio
 import json
 import inspect
+import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Tuple
 from unittest.mock import Mock, patch
+import time
 
 import asynctest
 
 from aiologger.loggers.json import JsonLogger
 from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
-    LOG_LEVEL_FIELDNAME, DATETIME_FORMAT
+    LOG_LEVEL_FIELDNAME
 from freezegun import freeze_time
-
 
 class JsonLoggerTests(asynctest.TestCase):
     async def setUp(self):
@@ -24,7 +25,7 @@ class JsonLoggerTests(asynctest.TestCase):
         patch('aiologger.logger.sys.stderr', self.write_pipe).start()
 
         self.stream_reader, self.reader_transport = await self._make_read_pipe_stream_reader()
-        self.logger = await JsonLogger.with_default_handlers(level=10)
+        self.logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     async def tearDown(self):
         # self.read_pipe.close()
@@ -80,11 +81,25 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(json_log['msg'], message)
 
-    @freeze_time("2017-03-31 04:20:00")
-    async def test_it_logs_current_log_time(self):
-        now = datetime.now().strftime(DATETIME_FORMAT)
+    @freeze_time("2017-03-31T04:20:00-06:00")
+    async def test_it_logs_current_time(self):
+        now = datetime.now(tz=timezone.utc).astimezone().isoformat()
 
         await self.logger.error("Batemos tambores, eles panela.")
+
+        logged_content = await self.stream_reader.readline()
+        json_log = json.loads(logged_content)
+
+        self.assertEqual(json_log['logged_at'], now)
+
+    @freeze_time("2017-03-31T04:20:00-05:00")
+    async def test_it_logs_time_at_desired_tz(self):
+        desired_tz = timezone(timedelta(hours=-1))
+        now = datetime.now(tz=timezone.utc).astimezone(desired_tz).isoformat()
+
+
+        logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, tz=desired_tz)
+        await logger.error("Batemos tambores, eles panela.")
 
         logged_content = await self.stream_reader.readline()
         json_log = json.loads(logged_content)
@@ -117,6 +132,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertIn(current_func_name, exc_traceback[0])
         self.assertIn('raise Exception(exception_message)', exc_traceback[1])
 
+    @freeze_time("2018-07-19T08:20:00+00:00")
     async def test_it_logs_datetime_objects(self):
         message = {
             'date': datetime.now().date(),
@@ -132,7 +148,7 @@ class JsonLoggerTests(asynctest.TestCase):
         expected_output = {
             'date': message['date'].isoformat(),
             'time': message['time'].isoformat(),
-            'datetime': message['datetime'].strftime(DATETIME_FORMAT)
+            'datetime': message['datetime'].isoformat()
         }
         self.assertDictEqual(json_log['msg'], expected_output)
 

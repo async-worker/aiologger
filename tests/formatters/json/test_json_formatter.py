@@ -65,6 +65,7 @@ class DefaultHandlerTests(unittest.TestCase):
             microsecond=666666
         )
         result = self.formatter._default_handler(obj)
+        # Se o objeto datetime tiver microsecond, `.isoformat()` serializa esse valor
         self.assertEqual(result, '2006-06-06T06:06:06.666666')
 
     def test_it_converts_exceptions_to_strings(self):
