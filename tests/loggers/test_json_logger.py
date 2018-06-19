@@ -12,7 +12,7 @@ import asynctest
 
 from aiologger.loggers.json import JsonLogger
 from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
-    LOG_LEVEL_FIELDNAME, DATETIME_FORMAT
+    LOG_LEVEL_FIELDNAME
 from freezegun import freeze_time
 
 class JsonLoggerTests(asynctest.TestCase):
@@ -82,7 +82,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertEqual(json_log['msg'], message)
 
     @freeze_time("2017-03-31T04:20:00-06:00")
-    async def test_it_logs_current_log_time(self):
+    async def test_it_logs_current_time(self):
         now = datetime.now(tz=timezone.utc).astimezone().isoformat()
 
         await self.logger.error("Batemos tambores, eles panela.")
@@ -148,7 +148,7 @@ class JsonLoggerTests(asynctest.TestCase):
         expected_output = {
             'date': message['date'].isoformat(),
             'time': message['time'].isoformat(),
-            'datetime': message['datetime'].strftime(DATETIME_FORMAT)
+            'datetime': message['datetime'].isoformat()
         }
         self.assertDictEqual(json_log['msg'], expected_output)
 
