@@ -18,9 +18,11 @@ class Logger(logging.Logger):
                                     name='aiologger',
                                     level=logging.NOTSET,
                                     formatter: logging.Formatter=None,
-                                    loop=None):
-        if formatter is None:
-            formatter = logging.Formatter()
+                                    loop=None,
+                                    **kwargs):
+        self = cls(name=name, level=level, **kwargs)
+
+        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
 
         stdout_handler = await AsyncStreamHandler.init_from_pipe(
             pipe=sys.stdout,
@@ -36,8 +38,6 @@ class Logger(logging.Logger):
             protocol_factory=AiologgerProtocol,
             formatter=formatter,
             loop=loop)
-
-        self = cls(name=name, level=level)
 
         self.addHandler(stdout_handler)
         self.addHandler(stderr_handler)
@@ -122,8 +122,35 @@ class Logger(logging.Logger):
                    exc_info=None,
                    extra=None,
                    stack_info=False):
-        record = self.make_log_record(level, msg, args, exc_info, extra,
-                                      stack_info)
+        sinfo = None
+        if logging._srcfile:
+            # IronPython doesn't track Python frames, so findCaller raises an
+            # exception on some versions of IronPython. We trap it here so that
+            # IronPython can use logging.
+            try:
+                fn, lno, func, sinfo = self.findCaller(stack_info)
+            except ValueError:  # pragma: no cover
+                fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        else:  # pragma: no cover
+            fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        if exc_info:
+            if isinstance(exc_info, BaseException):
+                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
+            elif not isinstance(exc_info, tuple):
+                exc_info = sys.exc_info()
+
+        record = logging.LogRecord(
+            name=self.name,
+            level=level,
+            pathname=fn,
+            lineno=lno,
+            msg=msg,
+            args=args,
+            exc_info=exc_info,
+            func=func,
+            sinfo=sinfo,
+            extra=extra
+        )
         await self.handle(record)
 
     async def debug(self, msg, *args, **kwargs):
