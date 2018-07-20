@@ -43,7 +43,8 @@ class LoggerTests(asynctest.TestCase):
         handlers = [Mock(), Mock()]
         with asynctest.patch('aiologger.logger.AsyncStreamHandler.init_from_pipe',
                              CoroutineMock(side_effect=handlers)) as init_from_pipe:
-            logger = await Logger.with_default_handlers(loop=self.loop)
+            logger = Logger.with_default_handlers(loop=self.loop)
+            await logger._initialize()
             self.assertCountEqual(logger.handlers, handlers)
 
             self.assertCountEqual(
@@ -57,14 +58,16 @@ class LoggerTests(asynctest.TestCase):
         with asynctest.patch(
                 'aiologger.logger.AsyncStreamHandler.init_from_pipe',
                 CoroutineMock(side_effect=handlers)) as init_from_pipe:
-            logger = await Logger.with_default_handlers()
+            logger = Logger.with_default_handlers()
+            await logger._initialize()
             self.assertCountEqual(logger.handlers, handlers)
 
     async def test_callhandlers_calls_handlers_for_loglevel(self):
         level10_handler = Mock(level=10, handle=CoroutineMock())
         level30_handler = Mock(level=30, handle=CoroutineMock())
 
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
+        await logger._initialize()
         logger.handlers = [level10_handler, level30_handler]
 
         record = LogRecord(
@@ -82,7 +85,8 @@ class LoggerTests(asynctest.TestCase):
         level30_handler.handle.assert_not_awaited()
 
     async def test_it_raises_an_error_if_no_handlers_are_found_for_record(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
+        await logger._initialize()
         logger.handlers = []
 
         record = LogRecord(
@@ -101,7 +105,8 @@ class LoggerTests(asynctest.TestCase):
         level10_handler = Mock(level=10, handle=CoroutineMock())
         level20_handler = Mock(level=20, handle=CoroutineMock())
 
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
+        await logger._initialize()
         logger.handlers = [level10_handler, level20_handler]
 
         record = LogRecord(
@@ -120,7 +125,7 @@ class LoggerTests(asynctest.TestCase):
         level20_handler.handle.assert_awaited_once_with(record)
 
     async def test_it_calls_handlers_if_logger_is_enabled_and_record_is_loggable(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         with patch.object(logger, 'filter', return_value=True) as filter, \
                 asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
@@ -130,7 +135,7 @@ class LoggerTests(asynctest.TestCase):
             callHandlers.assert_awaited_once_with(record)
 
     async def test_it_doesnt_calls_handlers_if_logger_is_disabled(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         with asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
             logger.disabled = True
@@ -139,7 +144,7 @@ class LoggerTests(asynctest.TestCase):
             callHandlers.assert_not_awaited()
 
     async def test_it_doesnt_calls_handlers_if_record_isnt_loggable(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         with patch.object(logger, 'filter', return_value=False) as filter, \
                 asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
@@ -149,7 +154,8 @@ class LoggerTests(asynctest.TestCase):
             callHandlers.assert_not_awaited()
 
     async def test_make_log_record_returns_a_log_record(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
+        await logger._initialize()
         record = logger.make_log_record(level=10, msg='Xablau', args=None)
 
         self.assertIsInstance(record, LogRecord)
@@ -158,7 +164,7 @@ class LoggerTests(asynctest.TestCase):
         self.assertEqual(record.levelname, 'DEBUG')
 
     async def test_log_makes_a_record_with_build_exc_info_from_exception(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         try:
             raise ValueError("41 isn't the answer")
         except Exception as e:
@@ -174,42 +180,42 @@ class LoggerTests(asynctest.TestCase):
                 self.assertEqual(exc, e)
 
     async def test_it_logs_debug_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         await logger.debug("Xablau")
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
     async def test_it_logs_info_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         await logger.info("Xablau")
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
     async def test_it_logs_warning_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         await logger.warning("Xablau")
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
     async def test_it_logs_error_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         await logger.error("Xablau")
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
     async def test_it_logs_critical_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
         await logger.critical("Xablau")
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
     async def test_it_logs_exception_messages(self):
-        logger = await Logger.with_default_handlers()
+        logger = Logger.with_default_handlers()
 
         try:
             raise Exception('Xablau')
