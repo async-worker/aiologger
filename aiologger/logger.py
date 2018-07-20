@@ -17,7 +17,7 @@ class Logger(logging.Logger):
     async def with_default_handlers(cls, *,
                                     name='aiologger',
                                     level=logging.NOTSET,
-                                    formatter: logging.Formatter=None,
+                                    formatter: logging.Formatter = None,
                                     loop=None,
                                     **kwargs):
         self = cls(name=name, level=level, **kwargs)
@@ -232,7 +232,7 @@ class Logger(logging.Logger):
             try:
                 await handler.flush()
                 handler.close()
-            except Exception as e :
+            except Exception:
                 """
                 Ignore errors which might be caused
                 because handlers have been closed but

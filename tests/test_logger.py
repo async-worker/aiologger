@@ -43,7 +43,6 @@ class LoggerTests(asynctest.TestCase):
         handlers = [Mock(), Mock()]
         with asynctest.patch('aiologger.logger.AsyncStreamHandler.init_from_pipe',
                              CoroutineMock(side_effect=handlers)) as init_from_pipe:
-
             logger = await Logger.with_default_handlers(loop=self.loop)
             self.assertCountEqual(logger.handlers, handlers)
 
@@ -123,7 +122,7 @@ class LoggerTests(asynctest.TestCase):
     async def test_it_calls_handlers_if_logger_is_enabled_and_record_is_loggable(self):
         logger = await Logger.with_default_handlers()
         with patch.object(logger, 'filter', return_value=True) as filter, \
-             asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+                asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
             await logger.handle(record)
 
@@ -142,7 +141,7 @@ class LoggerTests(asynctest.TestCase):
     async def test_it_doesnt_calls_handlers_if_record_isnt_loggable(self):
         logger = await Logger.with_default_handlers()
         with patch.object(logger, 'filter', return_value=False) as filter, \
-             asynctest.patch.object(logger, 'callHandlers') as callHandlers:
+                asynctest.patch.object(logger, 'callHandlers') as callHandlers:
             record = Mock()
             await logger.handle(record)
 

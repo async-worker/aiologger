@@ -21,14 +21,14 @@ class LogRecord(logging.LogRecord):
 
 class JsonLogger(Logger):
     def __init__(self,
-                 name: str='aiologger-json',
-                 level: int=logging.DEBUG,
-                 serializer: Callable[..., str]=json.dumps,
-                 flatten: bool=False,
-                 serializer_kwargs: Dict=None,
-                 extra: Dict=None,
-                 exclude_fields: Iterable[str]=None,
-                 loop: AbstractEventLoop=None,
+                 name: str = 'aiologger-json',
+                 level: int = logging.DEBUG,
+                 serializer: Callable[..., str] = json.dumps,
+                 flatten: bool = False,
+                 serializer_kwargs: Dict = None,
+                 extra: Dict = None,
+                 exclude_fields: Iterable[str] = None,
+                 loop: AbstractEventLoop = None,
                  tz: timezone = None):
 
         super().__init__(name=name, level=level, loop=loop)
@@ -36,7 +36,7 @@ class JsonLogger(Logger):
         self.flatten = flatten
         self.formatter = ExtendedJsonFormatter(serializer=self.serializer,
                                                exclude_fields=exclude_fields,
-                                                tz=tz)
+                                               tz=tz)
 
         if serializer_kwargs is None:
             serializer_kwargs = {}
@@ -48,14 +48,14 @@ class JsonLogger(Logger):
 
     @classmethod
     async def with_default_handlers(cls, *,
-                                    name: str='aiologger-json',
-                                    level: int=logging.NOTSET,
-                                    serializer: Callable[..., str]=json.dumps,
-                                    flatten: bool=False,
-                                    serializer_kwargs: Dict=None,
-                                    extra: Dict=None,
-                                    exclude_fields: Iterable[str]=None,
-                                    loop: AbstractEventLoop=None,
+                                    name: str = 'aiologger-json',
+                                    level: int = logging.NOTSET,
+                                    serializer: Callable[..., str] = json.dumps,
+                                    flatten: bool = False,
+                                    serializer_kwargs: Dict = None,
+                                    extra: Dict = None,
+                                    exclude_fields: Iterable[str] = None,
+                                    loop: AbstractEventLoop = None,
                                     tz: timezone = None):
         return await super(JsonLogger, cls).with_default_handlers(
             name='aiologger-json',
@@ -74,10 +74,10 @@ class JsonLogger(Logger):
                    msg: Any,
                    args: Tuple,
                    exc_info=None,
-                   extra: Dict=None,
+                   extra: Dict = None,
                    stack_info=False,
-                   flatten: bool=False,
-                   serializer_kwargs: Dict=None):
+                   flatten: bool = False,
+                   serializer_kwargs: Dict = None):
         """
         Low-level logging routine which creates a LogRecord and then calls
         all the handlers of this logger to handle the record.

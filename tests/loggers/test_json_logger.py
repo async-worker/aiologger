@@ -15,6 +15,7 @@ from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
     LOG_LEVEL_FIELDNAME
 from freezegun import freeze_time
 
+
 class JsonLoggerTests(asynctest.TestCase):
     async def setUp(self):
         r_fileno, w_fileno = os.pipe()
@@ -96,7 +97,6 @@ class JsonLoggerTests(asynctest.TestCase):
     async def test_it_logs_time_at_desired_tz(self):
         desired_tz = timezone(timedelta(hours=-1))
         now = datetime.now(tz=timezone.utc).astimezone(desired_tz).isoformat()
-
 
         logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, tz=desired_tz)
         await logger.error("Batemos tambores, eles panela.")
