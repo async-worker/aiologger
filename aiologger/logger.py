@@ -1,7 +1,7 @@
 import logging
 import sys
 from asyncio import Lock, Event
-from typing import Iterable, Optional, Callable, Coroutine, Awaitable
+from typing import Iterable, Optional, Callable, Awaitable
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
