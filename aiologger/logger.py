@@ -21,6 +21,7 @@ class Logger(logging.Logger):
         self._handler_factory = handler_factory or (lambda: self._create_default_handlers(formatter, loop))
         self._initializing = Lock()
         self._initialized = Event()
+        self._was_shutdown = False
 
     @classmethod
     def with_default_handlers(cls, *, name='aiologger',
@@ -246,6 +247,10 @@ class Logger(logging.Logger):
 
         Should be called at application exit.
         """
+        if self._was_shutdown:
+            return
+        self._was_shutdown = True
+
         for handler in reversed(self.handlers):
             if not handler:
                 continue

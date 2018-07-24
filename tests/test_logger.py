@@ -234,25 +234,44 @@ class LoggerTests(asynctest.TestCase):
         self.assertIn(b"raise Exception('Xablau')", logged_content)
 
     async def test_shutdown_doest_not_closes_handlers_if_not_initialized(self):
-        logger = Logger()
-        logger.handlers = [
+        handler_factory = CoroutineMock(return_value=[
             Mock(flush=CoroutineMock()),
             Mock(flush=CoroutineMock())
-        ]
+        ])
+        logger = Logger(handler_factory=handler_factory)
         await logger.shutdown()
-
-        for handler in logger.handlers:
-            handler.flush.assert_not_awaited()
-            handler.close.assert_not_called()
+        handler_factory.assert_not_awaited()
+        self.assertCountEqual([], logger.handlers)
 
     async def test_shutdown_closes_all_handlers_if_initialized(self):
-        logger = Logger()
-        await logger._initialize()
-        logger.handlers = [
+        handlers = [
             Mock(flush=CoroutineMock()),
             Mock(flush=CoroutineMock())
         ]
+        logger = Logger(handler_factory=CoroutineMock(return_value=handlers))
+        await logger._initialize()
+
         await logger.shutdown()
+
+        self.assertCountEqual(handlers, logger.handlers)
+
+        for handler in logger.handlers:
+            handler.flush.assert_awaited_once()
+            handler.close.assert_called_once()
+
+    async def test_shutdown_doest_not_closes_handlers_twice(self):
+        handlers = [
+            Mock(flush=CoroutineMock()),
+            Mock(flush=CoroutineMock())
+        ]
+        logger = Logger(handler_factory=CoroutineMock(return_value=handlers))
+        await logger._initialize()
+
+        await asyncio.gather(logger.shutdown(),
+                       logger.shutdown(),
+                       logger.shutdown())
+
+        self.assertCountEqual(handlers, logger.handlers)
 
         for handler in logger.handlers:
             handler.flush.assert_awaited_once()
