@@ -13,25 +13,22 @@ class Logger(logging.Logger):
                  name='aiologger',
                  level=logging.NOTSET,
                  loop=None,
-                 handler_factory: Optional[Awaitable[Iterable[logging.Handler]]] = None):
+                 formatter: Optional[logging.Formatter] = None,
+                 handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
         super(Logger, self).__init__(name, level)
         self.loop = loop
-        self._handler_factory = handler_factory
+        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
+        self._handler_factory = handler_factory or (lambda: self._create_default_handlers(formatter, loop))
         self._initializing = Lock()
         self._initialized = Event()
 
     @classmethod
     def with_default_handlers(cls, *, name='aiologger',
                               level=logging.NOTSET,
-                              formatter: logging.Formatter = None,
+                              formatter: Optional[logging.Formatter] = None,
                               loop=None,
                               **kwargs):
-
-        self = cls(name=name, level=level, **kwargs)
-
-        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
-        self._handler_factory = cls._create_default_handlers(formatter, loop)
-        return self
+        return cls(name=name, level=level, loop=loop, formatter=formatter, **kwargs)
 
     @classmethod
     async def _create_default_handlers(cls,
@@ -60,7 +57,7 @@ class Logger(logging.Logger):
                 await self._initialized.wait()
             else:
                 async with self._initializing:
-                    for handler in await self._handler_factory:
+                    for handler in await self._handler_factory():
                         self.addHandler(handler)
                 self._initialized.set()
 
@@ -253,8 +250,9 @@ class Logger(logging.Logger):
             if not handler:
                 continue
             try:
-                await handler.flush()
-                handler.close()
+                if self._initialized.is_set():
+                    await handler.flush()
+                    handler.close()
             except Exception:
                 """
                 Ignore errors which might be caused

@@ -233,8 +233,21 @@ class LoggerTests(asynctest.TestCase):
         self.assertIn(current_func_name.encode(), logged_content)
         self.assertIn(b"raise Exception('Xablau')", logged_content)
 
-    async def test_shutdown_closes_all_handlers(self):
+    async def test_shutdown_doest_not_closes_handlers_if_not_initialized(self):
         logger = Logger()
+        logger.handlers = [
+            Mock(flush=CoroutineMock()),
+            Mock(flush=CoroutineMock())
+        ]
+        await logger.shutdown()
+
+        for handler in logger.handlers:
+            handler.flush.assert_not_awaited()
+            handler.close.assert_not_called()
+
+    async def test_shutdown_closes_all_handlers_if_initialized(self):
+        logger = Logger()
+        await logger._initialize()
         logger.handlers = [
             Mock(flush=CoroutineMock()),
             Mock(flush=CoroutineMock())
@@ -247,6 +260,7 @@ class LoggerTests(asynctest.TestCase):
 
     async def test_shutdown_ignores_erros(self):
         logger = Logger()
+        await logger._initialize()
         logger.handlers = [
             Mock(flush=CoroutineMock(side_effect=ValueError)),
             Mock(flush=CoroutineMock())
