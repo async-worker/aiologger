@@ -3,7 +3,7 @@ import logging
 import sys
 from datetime import timezone
 from asyncio import AbstractEventLoop
-from typing import Dict, Iterable, Callable, Tuple, Any
+from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Awaitable
 
 from aiologger import Logger
 from aiologger.formatters.json import ExtendedJsonFormatter
@@ -29,14 +29,15 @@ class JsonLogger(Logger):
                  extra: Dict = None,
                  exclude_fields: Iterable[str] = None,
                  loop: AbstractEventLoop = None,
-                 tz: timezone = None):
+                 tz: timezone = None,
+                 formatter: Optional[logging.Formatter] = None,
+                 handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
+        formatter = formatter or ExtendedJsonFormatter(serializer=serializer,
+                                                       exclude_fields=exclude_fields,
+                                                       tz=tz)
+        super().__init__(name=name, level=level, loop=loop, formatter=formatter, handler_factory=handler_factory)
 
-        super().__init__(name=name, level=level, loop=loop)
-        self.serializer = serializer
         self.flatten = flatten
-        self.formatter = ExtendedJsonFormatter(serializer=self.serializer,
-                                               exclude_fields=exclude_fields,
-                                               tz=tz)
 
         if serializer_kwargs is None:
             serializer_kwargs = {}
@@ -47,17 +48,17 @@ class JsonLogger(Logger):
         self.extra = extra
 
     @classmethod
-    async def with_default_handlers(cls, *,
-                                    name: str = 'aiologger-json',
-                                    level: int = logging.NOTSET,
-                                    serializer: Callable[..., str] = json.dumps,
-                                    flatten: bool = False,
-                                    serializer_kwargs: Dict = None,
-                                    extra: Dict = None,
-                                    exclude_fields: Iterable[str] = None,
-                                    loop: AbstractEventLoop = None,
-                                    tz: timezone = None):
-        return await super(JsonLogger, cls).with_default_handlers(
+    def with_default_handlers(cls, *,
+                              name: str = 'aiologger-json',
+                              level: int = logging.NOTSET,
+                              serializer: Callable[..., str] = json.dumps,
+                              flatten: bool = False,
+                              serializer_kwargs: Dict = None,
+                              extra: Dict = None,
+                              exclude_fields: Iterable[str] = None,
+                              loop: AbstractEventLoop = None,
+                              tz: timezone = None):
+        return super(JsonLogger, cls).with_default_handlers(
             name='aiologger-json',
             level=level,
             loop=loop,

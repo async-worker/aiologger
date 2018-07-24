@@ -6,7 +6,6 @@ import os
 from datetime import datetime, timezone, timedelta
 from typing import Tuple
 from unittest.mock import Mock, patch
-import time
 
 import asynctest
 
@@ -26,7 +25,7 @@ class JsonLoggerTests(asynctest.TestCase):
         patch('aiologger.logger.sys.stderr', self.write_pipe).start()
 
         self.stream_reader, self.reader_transport = await self._make_read_pipe_stream_reader()
-        self.logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
+        self.logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     async def tearDown(self):
         # self.read_pipe.close()
@@ -98,7 +97,7 @@ class JsonLoggerTests(asynctest.TestCase):
         desired_tz = timezone(timedelta(hours=-1))
         now = datetime.now(tz=timezone.utc).astimezone(desired_tz).isoformat()
 
-        logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, tz=desired_tz)
+        logger = JsonLogger.with_default_handlers(level=logging.DEBUG, tz=desired_tz)
         await logger.error("Batemos tambores, eles panela.")
 
         logged_content = await self.stream_reader.readline()
@@ -255,7 +254,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertEqual(logged_content.decode(), expected_content + '\n')
 
     async def test_extra_parameter_adds_content_to_root_of_all_messages(self):
-        logger = await JsonLogger.with_default_handlers(level=10,
+        logger = JsonLogger.with_default_handlers(level=10,
                                                         extra={'dog': 'Xablau'})
         message = {'log_message': 'Xena'}
         await logger.info(message)
@@ -266,7 +265,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertEqual(logged_content['dog'], 'Xablau')
 
     async def test_extra_parameter_on_log_method_function_call_updates_extra_parameter_on_init(self):
-        logger = await JsonLogger.with_default_handlers(level=10,
+        logger = JsonLogger.with_default_handlers(level=10,
                                                         extra={'dog': 'Xablau'})
         message = {'log_message': 'Xena'}
         await logger.info(message, extra={"ham": "eggs"})
@@ -285,7 +284,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.assertEqual(logged_content['msg'], a_callable.return_value)
 
     async def test_default_fields_are_excludeable(self):
-        logger = await JsonLogger.with_default_handlers(
+        logger = JsonLogger.with_default_handlers(
             level=10,
             exclude_fields=[
                 FUNCTION_NAME_FIELDNAME,

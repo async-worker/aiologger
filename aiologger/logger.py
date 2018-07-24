@@ -13,12 +13,12 @@ class Logger(logging.Logger):
                  name='aiologger',
                  level=logging.NOTSET,
                  loop=None,
-                 formatter: Optional[logging.Formatter] = None,
+                 formatter: Optional[logging.Formatter] = logging.Formatter,
                  handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
         super(Logger, self).__init__(name, level)
         self.loop = loop
-        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
-        self._handler_factory = handler_factory or (lambda: self._create_default_handlers(formatter, loop))
+        self.formatter = formatter
+        self._handler_factory = handler_factory or (lambda: self._create_default_handlers(self.formatter, loop))
         self._initializing = Lock()
         self._initialized = Event()
         self._was_shutdown = False
@@ -29,7 +29,9 @@ class Logger(logging.Logger):
                               formatter: Optional[logging.Formatter] = None,
                               loop=None,
                               **kwargs):
-        return cls(name=name, level=level, loop=loop, formatter=formatter, **kwargs)
+        self = cls(name=name, level=level, loop=loop, formatter=formatter, **kwargs)
+
+        return self
 
     @classmethod
     async def _create_default_handlers(cls,
