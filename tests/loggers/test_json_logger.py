@@ -28,9 +28,10 @@ class JsonLoggerTests(asynctest.TestCase):
         self.logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     async def tearDown(self):
-        # self.read_pipe.close()
         self.write_pipe.close()
         self.reader_transport.close()
+        self.read_pipe.close()
+        await self.logger.shutdown()
         patch.stopall()
 
     async def _make_read_pipe_stream_reader(self) -> Tuple[asyncio.StreamReader,
