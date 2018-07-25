@@ -17,8 +17,7 @@ class Logger(logging.Logger):
                  handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
         super(Logger, self).__init__(name, level)
         self.loop = loop
-        self.formatter = formatter
-        self._handler_factory = handler_factory or (lambda: self._create_default_handlers(self.formatter, loop))
+        self._handler_factory = handler_factory or (lambda: Logger._create_default_handlers(formatter, loop))
         self._initializing = Lock()
         self._initialized = Event()
         self._was_shutdown = False
@@ -260,6 +259,7 @@ class Logger(logging.Logger):
                 if self._initialized.is_set():
                     await handler.flush()
                     handler.close()
+
             except Exception:
                 """
                 Ignore errors which might be caused
