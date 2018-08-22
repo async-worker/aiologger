@@ -18,8 +18,9 @@ class Logger(logging.Logger):
         super(Logger, self).__init__(name, level)
         self.loop = loop
         self._handler_factory = handler_factory or (lambda: Logger._create_default_handlers(formatter, loop))
+        self.initialized = False
         self._initializing = Lock()
-        self._initialized = Event()
+        self._initialized = False
         self._was_shutdown = False
 
     @classmethod
@@ -54,14 +55,13 @@ class Logger(logging.Logger):
         return [stdout_handler, stderr_handler]
 
     async def _initialize(self):
-        if not self._initialized.is_set():
-            if self._initializing.locked():
-                await self._initialized.wait()
-            else:
-                async with self._initializing:
-                    for handler in await self._handler_factory():
-                        self.addHandler(handler)
-                self._initialized.set()
+        if not self._initialized:
+            async with self._initializing:
+                if self._initialized:
+                    return
+                for handler in await self._handler_factory():
+                    self.addHandler(handler)
+                self._initialized = True
 
     async def callHandlers(self, record):
         """
@@ -256,7 +256,7 @@ class Logger(logging.Logger):
             if not handler:
                 continue
             try:
-                if self._initialized.is_set():
+                if self._initialized:
                     await handler.flush()
                     handler.close()
 
