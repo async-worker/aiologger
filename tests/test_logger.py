@@ -4,10 +4,9 @@ import logging
 import os
 from logging import LogRecord
 from typing import Tuple
-
-import asynctest
 from unittest.mock import Mock, patch
 
+import asynctest
 from asynctest import CoroutineMock
 
 from aiologger.logger import Logger
@@ -268,8 +267,8 @@ class LoggerTests(asynctest.TestCase):
         await logger._initialize()
 
         await asyncio.gather(logger.shutdown(),
-                       logger.shutdown(),
-                       logger.shutdown())
+                             logger.shutdown(),
+                             logger.shutdown())
 
         self.assertCountEqual(handlers, logger.handlers)
 
@@ -289,3 +288,37 @@ class LoggerTests(asynctest.TestCase):
 
         logger.handlers[0].close.assert_not_called()
         logger.handlers[1].close.assert_called_once()
+
+    async def test_logger_handlers_are_not_initialized_twice(self):
+        condition = asyncio.Condition()
+        initialize_meta = {'count': 0}
+
+        async def create_handlers():
+            async with condition:
+                await condition.wait_for(predicate=lambda: initialize_meta['count'] == 4)
+
+            return await Logger._create_default_handlers()
+
+        handlers_factory = CoroutineMock(side_effect=create_handlers)
+
+        logger = Logger(handler_factory=CoroutineMock(side_effect=handlers_factory))
+
+        original_initialize = logger._initialize
+
+        async def initialize():
+            async with condition:
+                initialize_meta['count'] += 1
+                condition.notify_all()
+            await original_initialize()
+
+        patch.object(logger, '_initialize', initialize).start()
+
+        await asyncio.gather(
+            logger.info('sardinha'),
+            logger.info('tilápia'),
+            logger.info('xerelete'),
+            logger.error('fraldinha'),
+        )
+
+        handlers_factory.assert_called_once()
+        await logger.shutdown()
