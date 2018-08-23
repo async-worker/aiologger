@@ -301,7 +301,7 @@ class LoggerTests(asynctest.TestCase):
 
         handlers_factory = CoroutineMock(side_effect=create_handlers)
 
-        logger = Logger(handler_factory=CoroutineMock(side_effect=handlers_factory))
+        logger = Logger(handler_factory=handlers_factory)
 
         original_initialize = logger._initialize
 
