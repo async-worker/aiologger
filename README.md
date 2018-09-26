@@ -38,7 +38,7 @@ from aiologger import Logger
 
 
 async def main():
-    logger = await Logger.with_default_handlers(name='my-logger')
+    logger = Logger.with_default_handlers(name='my-logger')
     
     await logger.debug("Hello stdout !")
     await logger.info("Hello stdout !")

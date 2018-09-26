@@ -1,14 +1,14 @@
 import json
 import unittest
-from unittest.mock import patch, ANY
 from datetime import timezone, timedelta
-import time
+from unittest.mock import patch, ANY
+
+from freezegun import freeze_time
 
 from aiologger.formatters.json import ExtendedJsonFormatter, \
     LOG_LEVEL_FIELDNAME, LINE_NUMBER_FIELDNAME
 from aiologger.loggers.json import LogRecord
 
-from freezegun import freeze_time
 
 class ExtendedJsonFormatterTests(unittest.TestCase):
     def setUp(self):
@@ -211,4 +211,3 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
                 'female_dog': 'Xena'
             }
         )
-

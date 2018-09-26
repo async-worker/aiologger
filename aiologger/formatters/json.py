@@ -6,7 +6,6 @@ from inspect import istraceback
 from typing import Callable, Iterable
 from datetime import timezone
 
-
 LOGGED_AT_FIELDNAME = 'logged_at'
 LINE_NUMBER_FIELDNAME = 'line_number'
 FUNCTION_NAME_FIELDNAME = 'function'
@@ -67,7 +66,7 @@ class ExtendedJsonFormatter(JsonFormatter):
     def __init__(self,
                  serializer: Callable[..., str] = json.dumps,
                  default_msg_fieldname: str = None,
-                 exclude_fields: Iterable[str]=None,
+                 exclude_fields: Iterable[str] = None,
                  tz: timezone = None):
 
         super(ExtendedJsonFormatter, self).__init__(

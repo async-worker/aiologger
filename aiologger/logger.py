@@ -1,5 +1,8 @@
 import logging
 import sys
+from asyncio import Lock, Event
+from typing import Iterable, Optional, Callable, Awaitable
+
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
 from aiologger.protocols import AiologgerProtocol
@@ -9,20 +12,31 @@ class Logger(logging.Logger):
     def __init__(self, *,
                  name='aiologger',
                  level=logging.NOTSET,
-                 loop=None):
+                 loop=None,
+                 formatter: Optional[logging.Formatter] = logging.Formatter,
+                 handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
         super(Logger, self).__init__(name, level)
         self.loop = loop
+        self._handler_factory = handler_factory or (lambda: Logger._create_default_handlers(formatter, loop))
+        self.initialized = False
+        self._initializing = Lock()
+        self._initialized = False
+        self._was_shutdown = False
 
     @classmethod
-    async def with_default_handlers(cls, *,
-                                    name='aiologger',
-                                    level=logging.NOTSET,
-                                    formatter: logging.Formatter=None,
-                                    loop=None,
-                                    **kwargs):
-        self = cls(name=name, level=level, **kwargs)
+    def with_default_handlers(cls, *, name='aiologger',
+                              level=logging.NOTSET,
+                              formatter: Optional[logging.Formatter] = None,
+                              loop=None,
+                              **kwargs):
+        self = cls(name=name, level=level, loop=loop, formatter=formatter, **kwargs)
 
-        formatter = formatter or getattr(self, 'formatter', logging.Formatter())
+        return self
+
+    @classmethod
+    async def _create_default_handlers(cls,
+                                       formatter: logging.Formatter = None,
+                                       loop=None) -> Iterable[logging.Handler]:
 
         stdout_handler = await AsyncStreamHandler.init_from_pipe(
             pipe=sys.stdout,
@@ -38,11 +52,16 @@ class Logger(logging.Logger):
             protocol_factory=AiologgerProtocol,
             formatter=formatter,
             loop=loop)
+        return [stdout_handler, stderr_handler]
 
-        self.addHandler(stdout_handler)
-        self.addHandler(stderr_handler)
-
-        return self
+    async def _initialize(self):
+        if not self._initialized:
+            async with self._initializing:
+                if self._initialized:
+                    return
+                for handler in await self._handler_factory():
+                    self.addHandler(handler)
+                self._initialized = True
 
     async def callHandlers(self, record):
         """
@@ -75,6 +94,8 @@ class Logger(logging.Logger):
         This method is used for unpickled records received from a socket, as
         well as those created locally. Logger-level filtering is applied.
         """
+        await self._initialize()
+
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
 
@@ -122,6 +143,7 @@ class Logger(logging.Logger):
                    exc_info=None,
                    extra=None,
                    stack_info=False):
+
         sinfo = None
         if logging._srcfile:
             # IronPython doesn't track Python frames, so findCaller raises an
@@ -226,13 +248,19 @@ class Logger(logging.Logger):
 
         Should be called at application exit.
         """
+        if self._was_shutdown:
+            return
+        self._was_shutdown = True
+
         for handler in reversed(self.handlers):
             if not handler:
                 continue
             try:
-                await handler.flush()
-                handler.close()
-            except Exception as e :
+                if self._initialized:
+                    await handler.flush()
+                    handler.close()
+
+            except Exception:
                 """
                 Ignore errors which might be caused
                 because handlers have been closed but

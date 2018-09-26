@@ -81,7 +81,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
 
         await handler.emit(self.record)
 
-        stream.write.assert_awaited_once_with((msg+handler.terminator).encode())
+        stream.write.assert_awaited_once_with((msg + handler.terminator).encode())
         stream.drain.assert_awaited_once()
 
     async def test_emit_calls_handleError_if_an_erro_occurs(self):
@@ -102,7 +102,6 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
                                      formatter=Mock(side_effect=Exception))
         with asynctest.patch.object(handler, 'emit') as emit, \
                 patch.object(handler, 'filter', return_value=True) as filter:
-
             self.assertTrue(await handler.handle(self.record))
             filter.assert_called_once_with(self.record)
             emit.assert_awaited_once_with(self.record)
