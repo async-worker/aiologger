@@ -27,17 +27,17 @@ py.test
 # Implemented interfaces
 
 aiologger implements two different interfaces that you can use to generate your logs.
-You can generate your logs using the async/await syntax or, if you for any reason can't (or don't want to)
-change all your codebase to use the new syntax you can use aiologger as if it were sychronous, but behind the scenes
-your log will be generated asynchronously.
+You can generate your logs using the `async/await` syntax or, if you for any reason can't (or don't want to)
+change all your codebase to use this syntax you can use aiologger as if it were synchronous, but behind the scenes
+your logs will be generated asynchronously.
 
 
-# Migrating from logging
+# Migrating from standard lib logging
 
 
-# Using aiologger with the standard syntax
+## Using aiologger with the standard syntax
 
-If you prefer not to use the async/await all you need to do is to replace you logger instance with an instance of `aiologger.Logger`.
+If you prefer not to use the `async/await` all you need to do is to replace you logger instance with an instance of `aiologger.Logger`.
 For now on you can call `logger.info()` the same way you are (probably) already calling. Here is a simple example:
 
 ```python
@@ -78,7 +78,7 @@ critical
 ---
 
 If you want to generate all your logs asynchronously, you just have to change the instance of the `logger` object.
-To do that, all we need to do is change the import line from:
+To do that, all we need to change those lines from:
 
 ```python
 from logging import getLogger
@@ -86,7 +86,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 ```
 
-to 
+to: 
 
 ```python
 from aiologger import Logger
@@ -94,7 +94,7 @@ from aiologger import Logger
 logger = Logger.with_default_handlers()
 ```
 
-and here is the complete example, generating all log lins asynchronously.
+and here is the complete example, generating all log lines asynchronously.
 
 ```python
 import asyncio
@@ -131,7 +131,7 @@ critical
 As you might have noticed, the output order **IS NOT GUARANTEED**. If the log 
 order matters to you, you'll need to use the `await` syntax.
 
-# Using aiologger with the async/await syntax
+## Using aiologger with the async/await syntax
  
 
 ```python
@@ -173,7 +173,7 @@ info at stdout
 critical at stderr
 ```
 
-You may notice that the order between the same order is guaranteed. E.g.:
+You may notice that the order between the same handler is guaranteed. E.g.:
 * `debug at stdout` was outputted before `info at stdout`
 * `warning at stderr` was outputted before `error at stderr`
 * between lines of distinct handlers, the order isn't guaranteed. 
