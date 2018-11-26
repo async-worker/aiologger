@@ -107,43 +107,6 @@ class Logger(logging.Logger):
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
 
-    def make_log_record(self,
-                        level,
-                        msg,
-                        args,
-                        exc_info=None,
-                        extra=None,
-                        stack_info=False):
-        sinfo = None
-        if logging._srcfile:
-            # IronPython doesn't track Python frames, so findCaller raises an
-            # exception on some versions of IronPython. We trap it here so that
-            # IronPython can use logging.
-            try:
-                fn, lno, func, sinfo = self.findCaller(stack_info)
-            except ValueError:  # pragma: no cover
-                fn, lno, func = "(unknown file)", 0, "(unknown function)"
-        else:  # pragma: no cover
-            fn, lno, func = "(unknown file)", 0, "(unknown function)"
-        if exc_info:
-            if isinstance(exc_info, BaseException):
-                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
-            elif not isinstance(exc_info, tuple):
-                exc_info = sys.exc_info()
-
-        return logging.LogRecord(
-            name=self.name,
-            level=level,
-            pathname=fn,
-            lineno=lno,
-            msg=msg,
-            args=args,
-            exc_info=exc_info,
-            func=func,
-            sinfo=sinfo,
-            extra=extra
-        )
-
     async def _log(self,
                    level,
                    msg,
