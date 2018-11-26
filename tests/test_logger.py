@@ -322,3 +322,24 @@ class LoggerTests(asynctest.TestCase):
 
         handlers_factory.assert_called_once()
         await logger.shutdown()
+
+    async def test_it_returns_a_dummy_task_if_logging_isnt_enabled_for_level(self):
+        logger = Logger.with_default_handlers()
+        with patch.object(logger, 'isEnabledFor', return_value=False) as isEnabledFor, \
+             patch.object(logger, '_Logger__dummy_task') as __dummy_task:
+            log_task = logger.info("im disabled")
+            isEnabledFor.assert_called_once_with(logging.INFO)
+            self.assertEqual(log_task, __dummy_task)
+
+    async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
+        logger = Logger.with_default_handlers()
+        log_task = logger.info("Xablau")
+
+        self.assertIsInstance(log_task, asyncio.Task)
+        self.assertFalse(log_task.done())
+
+        await log_task
+        self.assertTrue(log_task.done())
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")

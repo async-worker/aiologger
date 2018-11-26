@@ -1,11 +1,16 @@
+import asyncio
 import logging
 import sys
-from asyncio import Lock, Event
-from typing import Iterable, Optional, Callable, Awaitable
+from asyncio import Lock, AbstractEventLoop, Task
+from typing import Iterable, Optional, Callable, Awaitable, Tuple
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
 from aiologger.protocols import AiologgerProtocol
+
+
+_Caller = Tuple[str, int, str, Optional[str]]
+_HandlerFactory = Callable[[], Awaitable[Iterable[logging.Handler]]]
 
 
 class Logger(logging.Logger):
@@ -14,14 +19,17 @@ class Logger(logging.Logger):
                  level=logging.NOTSET,
                  loop=None,
                  formatter: Optional[logging.Formatter] = logging.Formatter,
-                 handler_factory: Optional[Callable[[], Awaitable[Iterable[logging.Handler]]]] = None):
+                 handler_factory: Optional[_HandlerFactory] = None):
         super(Logger, self).__init__(name, level)
-        self.loop = loop
+        self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
         self._handler_factory = handler_factory or (lambda: Logger._create_default_handlers(formatter, loop))
         self.initialized = False
         self._initializing = Lock()
         self._initialized = False
         self._was_shutdown = False
+
+        async def _dummy(*args, **kwargs): return
+        self.__dummy_task = self.loop.create_task(_dummy())
 
     @classmethod
     def with_default_handlers(cls, *, name='aiologger',
@@ -142,10 +150,11 @@ class Logger(logging.Logger):
                    args,
                    exc_info=None,
                    extra=None,
-                   stack_info=False):
+                   stack_info=False,
+                   caller: _Caller = None):
 
         sinfo = None
-        if logging._srcfile:
+        if logging._srcfile and caller is None:
             # IronPython doesn't track Python frames, so findCaller raises an
             # exception on some versions of IronPython. We trap it here so that
             # IronPython can use logging.
@@ -153,6 +162,8 @@ class Logger(logging.Logger):
                 fn, lno, func, sinfo = self.findCaller(stack_info)
             except ValueError:  # pragma: no cover
                 fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        elif caller:
+            fn, lno, func, sinfo = caller
         else:  # pragma: no cover
             fn, lno, func = "(unknown file)", 0, "(unknown function)"
         if exc_info:
@@ -175,7 +186,23 @@ class Logger(logging.Logger):
         )
         await self.handle(record)
 
-    async def debug(self, msg, *args, **kwargs):
+    def _make_log_task(self, level, msg, *args, **kwargs) -> Task:
+        """
+        Creates an asyncio.Task for a msg if logging is enabled for level.
+        Returns a dummy task otherwise.
+        """
+        if not self.isEnabledFor(level):
+            return self.__dummy_task
+
+        if kwargs.get('exc_info', False):
+            kwargs['exc_info'] = sys.exc_info()
+
+        coro = self._log(level, msg, *args,
+                         caller=self.findCaller(False),
+                         **kwargs)
+        return self.loop.create_task(coro)
+
+    def debug(self, msg, *args, **kwargs) -> Task:
         """
         Log msg with severity 'DEBUG'.
 
@@ -184,10 +211,9 @@ class Logger(logging.Logger):
 
         await logger.debug("Houston, we have a %s", "thorny problem", exc_info=1)
         """
-        if self.isEnabledFor(logging.DEBUG):
-            await self._log(logging.DEBUG, msg, args, **kwargs)
+        return self._make_log_task(logging.DEBUG, msg, args, **kwargs)
 
-    async def info(self, msg, *args, **kwargs):
+    def info(self, msg, *args, **kwargs) -> Task:
         """
         Log msg with severity 'INFO'.
 
@@ -196,10 +222,9 @@ class Logger(logging.Logger):
 
         await logger.info("Houston, we have an interesting problem", exc_info=1)
         """
-        if self.isEnabledFor(logging.INFO):
-            await self._log(logging.INFO, msg, args, **kwargs)
+        return self._make_log_task(logging.INFO, msg, args, **kwargs)
 
-    async def warning(self, msg, *args, **kwargs):
+    def warning(self, msg, *args, **kwargs) -> Task:
         """
         Log msg with severity 'WARNING'.
 
@@ -208,10 +233,9 @@ class Logger(logging.Logger):
 
         await logger.warning("Houston, we have a bit of a problem", exc_info=1)
         """
-        if self.isEnabledFor(logging.WARNING):
-            await self._log(logging.WARNING, msg, args, **kwargs)
+        return self._make_log_task(logging.WARNING, msg, args, **kwargs)
 
-    async def error(self, msg, *args, **kwargs):
+    def error(self, msg, *args, **kwargs) -> Task:
         """
         Log msg with severity 'ERROR'.
 
@@ -220,10 +244,9 @@ class Logger(logging.Logger):
 
         await logger.error("Houston, we have a major problem", exc_info=1)
         """
-        if self.isEnabledFor(logging.ERROR):
-            await self._log(logging.ERROR, msg, args, **kwargs)
+        return self._make_log_task(logging.ERROR, msg, args, **kwargs)
 
-    async def critical(self, msg, *args, **kwargs):
+    def critical(self, msg, *args, **kwargs) -> Task:
         """
         Log msg with severity 'CRITICAL'.
 
@@ -232,14 +255,13 @@ class Logger(logging.Logger):
 
         await logger.critical("Houston, we have a major disaster", exc_info=1)
         """
-        if self.isEnabledFor(logging.CRITICAL):
-            await self._log(logging.CRITICAL, msg, args, **kwargs)
+        return self._make_log_task(logging.CRITICAL, msg, args, **kwargs)
 
-    async def exception(self, msg, *args, exc_info=True, **kwargs):
+    def exception(self, msg, *args, exc_info=True, **kwargs) -> Task:
         """
         Convenience method for logging an ERROR with exception information.
         """
-        await self.error(msg, *args, exc_info=exc_info, **kwargs)
+        return self.error(msg, *args, exc_info=exc_info, **kwargs)
 
     async def shutdown(self):
         """

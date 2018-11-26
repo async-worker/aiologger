@@ -7,6 +7,7 @@ from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Awaitable
 
 from aiologger import Logger
 from aiologger.formatters.json import ExtendedJsonFormatter
+from aiologger.logger import _Caller
 
 
 class LogRecord(logging.LogRecord):
@@ -78,7 +79,8 @@ class JsonLogger(Logger):
                    extra: Dict = None,
                    stack_info=False,
                    flatten: bool = False,
-                   serializer_kwargs: Dict = None):
+                   serializer_kwargs: Dict = None,
+                   caller: _Caller=None):
         """
         Low-level logging routine which creates a LogRecord and then calls
         all the handlers of this logger to handle the record.
@@ -86,7 +88,7 @@ class JsonLogger(Logger):
         Overwritten to properly handle log methods kwargs
         """
         sinfo = None
-        if logging._srcfile:
+        if logging._srcfile and caller is None:
             # IronPython doesn't track Python frames, so findCaller raises an
             # exception on some versions of IronPython. We trap it here so that
             # IronPython can use logging.
@@ -94,6 +96,8 @@ class JsonLogger(Logger):
                 fn, lno, func, sinfo = self.findCaller(stack_info)
             except ValueError:  # pragma: no cover
                 fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        elif caller:
+            fn, lno, func, sinfo = caller
         else:  # pragma: no cover
             fn, lno, func = "(unknown file)", 0, "(unknown function)"
         if exc_info:
