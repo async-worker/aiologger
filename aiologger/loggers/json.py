@@ -88,15 +88,7 @@ class JsonLogger(Logger):
         Overwritten to properly handle log methods kwargs
         """
         sinfo = None
-        if logging._srcfile and caller is None:
-            # IronPython doesn't track Python frames, so findCaller raises an
-            # exception on some versions of IronPython. We trap it here so that
-            # IronPython can use logging.
-            try:
-                fn, lno, func, sinfo = self.findCaller(stack_info)
-            except ValueError:  # pragma: no cover
-                fn, lno, func = "(unknown file)", 0, "(unknown function)"
-        elif caller:
+        if caller:
             fn, lno, func, sinfo = caller
         else:  # pragma: no cover
             fn, lno, func = "(unknown file)", 0, "(unknown function)"
