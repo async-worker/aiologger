@@ -8,8 +8,9 @@ from typing import Tuple
 from unittest.mock import Mock, patch
 
 import asynctest
+from asynctest import CoroutineMock
 
-from aiologger.loggers.json import JsonLogger
+from aiologger.loggers.json import JsonLogger, LogRecord
 from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, \
     LOG_LEVEL_FIELDNAME
 from freezegun import freeze_time
@@ -127,6 +128,40 @@ class JsonLoggerTests(asynctest.TestCase):
 
         exc_class, exc_message, exc_traceback = json_log['exc_info']
         self.assertEqual(f"Exception: Exception('{exception_message}',)", exc_message)
+
+        current_func_name = inspect.currentframe().f_code.co_name
+        self.assertIn(current_func_name, exc_traceback[0])
+        self.assertIn('raise Exception(exception_message)', exc_traceback[1])
+
+    async def test_log_makes_a_record_with_build_exc_info_from_exception(self):
+        try:
+            raise ValueError("41 isn't the answer")
+        except Exception as e:
+            with patch.object(self.logger, 'handle', CoroutineMock()) as handle:
+                await self.logger._log(level=10,
+                                       msg='Xablau',
+                                       args=None,
+                                       exc_info=e)
+                call = handle.await_args_list.pop()
+                record: LogRecord = call[0][0]
+                exc_class, exc, exc_traceback = record.exc_info
+                self.assertEqual(exc_class, ValueError)
+                self.assertEqual(exc, e)
+
+    async def test_it_logs_exc_info_from_exceptions(self):
+        exception_message = "Carros importados pra garantir os translados"
+
+        try:
+            raise Exception(exception_message)
+        except Exception as e:
+            await self.logger.warning("Aqui nao eh GTA, eh pior, eh Grajau", exc_info=e)
+
+        logged_content = await self.stream_reader.readline()
+        json_log = json.loads(logged_content)
+
+        exc_class, exc_message, exc_traceback = json_log['exc_info']
+        self.assertEqual(f"Exception: Exception('{exception_message}',)",
+                         exc_message)
 
         current_func_name = inspect.currentframe().f_code.co_name
         self.assertIn(current_func_name, exc_traceback[0])
