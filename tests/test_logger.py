@@ -152,16 +152,6 @@ class LoggerTests(asynctest.TestCase):
             filter.assert_called_once_with(record)
             callHandlers.assert_not_awaited()
 
-    async def test_make_log_record_returns_a_log_record(self):
-        logger = Logger.with_default_handlers()
-        await logger._initialize()
-        record = logger.make_log_record(level=10, msg='Xablau', args=None)
-
-        self.assertIsInstance(record, LogRecord)
-        self.assertEqual(record.msg, 'Xablau')
-        self.assertEqual(record.levelno, 10)
-        self.assertEqual(record.levelname, 'DEBUG')
-
     async def test_log_makes_a_record_with_build_exc_info_from_exception(self):
         logger = Logger.with_default_handlers()
         try:
@@ -172,6 +162,21 @@ class LoggerTests(asynctest.TestCase):
                                   msg='Xablau',
                                   args=None,
                                   exc_info=e)
+                call = handle.await_args_list.pop()
+                record: LogRecord = call[0][0]
+                exc_class, exc, exc_traceback = record.exc_info
+                self.assertEqual(exc_class, ValueError)
+                self.assertEqual(exc, e)
+
+    async def test_log_makes_a_record_with_build_exc_info_from_sys_stack(self):
+        logger = Logger.with_default_handlers()
+
+        try:
+            raise ValueError("41 isn't the answer")
+        except Exception as e:
+            with patch.object(logger, 'handle', CoroutineMock()) as handle:
+                await logger.exception("Xablau")
+
                 call = handle.await_args_list.pop()
                 record: LogRecord = call[0][0]
                 exc_class, exc, exc_traceback = record.exc_info
@@ -322,3 +327,24 @@ class LoggerTests(asynctest.TestCase):
 
         handlers_factory.assert_called_once()
         await logger.shutdown()
+
+    async def test_it_returns_a_dummy_task_if_logging_isnt_enabled_for_level(self):
+        logger = Logger.with_default_handlers()
+        with patch.object(logger, 'isEnabledFor', return_value=False) as isEnabledFor, \
+             patch.object(logger, '_Logger__dummy_task') as __dummy_task:
+            log_task = logger.info("im disabled")
+            isEnabledFor.assert_called_once_with(logging.INFO)
+            self.assertEqual(log_task, __dummy_task)
+
+    async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
+        logger = Logger.with_default_handlers()
+        log_task = logger.info("Xablau")
+
+        self.assertIsInstance(log_task, asyncio.Task)
+        self.assertFalse(log_task.done())
+
+        await log_task
+        self.assertTrue(log_task.done())
+
+        logged_content = await self.stream_reader.readline()
+        self.assertEqual(logged_content, b"Xablau\n")
