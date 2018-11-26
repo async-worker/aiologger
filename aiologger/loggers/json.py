@@ -92,11 +92,8 @@ class JsonLogger(Logger):
             fn, lno, func, sinfo = caller
         else:  # pragma: no cover
             fn, lno, func = "(unknown file)", 0, "(unknown function)"
-        if exc_info:
-            if isinstance(exc_info, BaseException):
-                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
-            elif not isinstance(exc_info, tuple):
-                exc_info = sys.exc_info()
+        if exc_info and isinstance(exc_info, BaseException):
+            exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
 
         joined_extra = {}
         joined_extra.update(self.extra)

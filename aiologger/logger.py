@@ -129,11 +129,8 @@ class Logger(logging.Logger):
             fn, lno, func, sinfo = caller
         else:  # pragma: no cover
             fn, lno, func = "(unknown file)", 0, "(unknown function)"
-        if exc_info:
-            if isinstance(exc_info, BaseException):
-                exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
-            elif not isinstance(exc_info, tuple):
-                exc_info = sys.exc_info()
+        if exc_info and isinstance(exc_info, BaseException):
+            exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
 
         record = logging.LogRecord(
             name=self.name,
@@ -158,7 +155,8 @@ class Logger(logging.Logger):
             return self.__dummy_task
 
         if kwargs.get('exc_info', False):
-            kwargs['exc_info'] = sys.exc_info()
+            if not isinstance(kwargs['exc_info'], BaseException):
+                kwargs['exc_info'] = sys.exc_info()
 
         coro = self._log(level, msg, *args,
                          caller=self.findCaller(False),
