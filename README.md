@@ -128,8 +128,10 @@ error
 critical
 ```
 
-As you might have noticed, the output order **IS NOT GUARANTEED**. If the log 
-order matters to you, you'll need to use the `await` syntax.
+As you might have noticed, the output order **IS NOT GUARANTEED**. 
+If some kind of order is important to you, you'll need to use the `await` syntax.
+But thinking about an asyncio application, where every I/O operation is asynchronous, 
+this shouldn't really matter.
 
 ## Using aiologger with the async/await syntax
  
