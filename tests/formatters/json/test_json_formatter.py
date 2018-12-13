@@ -82,3 +82,12 @@ class DefaultHandlerTests(unittest.TestCase):
         obj = 4.2
         result = self.formatter._default_handler(obj)
         self.assertEqual(result, "4.2")
+
+    def test_it_converts_exception_types_to_strings(self):
+        class MyException(Exception):
+            def __init__(self, errors):
+                self.errors = errors
+        
+        result = self.formatter._default_handler(MyException)
+        
+        self.assertEqual(result, str(MyException))
