@@ -351,7 +351,7 @@ await logger.warning({'artist': 'Black Country Communion', 'song': 'Cold'}, seri
 
 ## Compatibility
 
-Currently tested only on python 3.6
+Currently tested only on python 3.6 and 3.7
 
 ## Depencencies
 
