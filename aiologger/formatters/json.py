@@ -31,6 +31,8 @@ class JsonFormatter(logging.Formatter):
             return tb.strip().split('\n')
         elif isinstance(obj, Exception):
             return "Exception: %s" % repr(obj)
+        elif type(obj) is type:
+            return str(obj)
         elif callable(obj):
             return obj()
         return str(obj)
