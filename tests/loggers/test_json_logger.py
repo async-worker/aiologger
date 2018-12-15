@@ -164,8 +164,12 @@ class JsonLoggerTests(asynctest.TestCase):
         json_log = json.loads(logged_content)
 
         exc_class, exc_message, exc_traceback = json_log['exc_info']
-        self.assertEqual(f"Exception: Exception('{exception_message}',)",
-                         exc_message)
+        if sys.version < LooseVersion('3.7'):
+            self.assertEqual(f"Exception: Exception('{exception_message}',)",
+                             exc_message)
+        else:
+            self.assertEqual(f"Exception: Exception('{exception_message}')",
+                             exc_message)
 
         current_func_name = inspect.currentframe().f_code.co_name
         self.assertIn(current_func_name, exc_traceback[0])
