@@ -110,6 +110,8 @@ async def main():
     logger.warning("warning")
     logger.error("error")
     logger.critical("critical")
+    
+    await logger.shutdown()
 
 
 loop = asyncio.get_event_loop()
@@ -150,6 +152,7 @@ async def main():
     await logger.warning("warning at stderr")
     await logger.error("error at stderr")
     await logger.critical("critical at stderr")
+    
     await logger.shutdown()
 
 loop = asyncio.get_event_loop()
@@ -181,6 +184,36 @@ You may notice that the order between the same handler is guaranteed. E.g.:
 * between lines of distinct handlers, the order isn't guaranteed. 
 `warning at stderr` was outputted before `debug at stdout` 
 
+## Lazy initialization
+
+Since the actual stream initialization only happens on the first log call, its 
+possible to initialize the `aiologger.Logger` instances outside a running event
+loop:
+
+
+```python
+
+import asyncio
+from aiologger import Logger
+
+
+async def main():
+    logger = Logger.with_default_handlers(name='my-logger')
+    
+    await logger.debug("debug at stdout")
+    await logger.info("info at stdout")
+
+    await logger.warning("warning at stderr")
+    await logger.error("error at stderr")
+    await logger.critical("critical at stderr")
+
+    await logger.shutdown()
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+loop.close()
+```
+
 # Loggers
 
 ## JsonLogger
@@ -190,7 +223,7 @@ that grants to always log valid, single line, JSON output.
 
 ### It logs everything
 
-``` python
+```python
 import asyncio
 from datetime import datetime
 
@@ -198,7 +231,7 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers()
+    logger = JsonLogger.with_default_handlers()
     await logger.info("Im a string")
     # {"logged_at": "2018-06-14T09:34:56.482817", "line_number": 9, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": "Im a string"}
     
@@ -208,6 +241,8 @@ async def main():
         'types': JsonLogger
     })
     # {"logged_at": "2018-06-14T09:34:56.483000", "line_number": 13, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": {"date_objects": "2018-06-14T09:34:56.482953", "exceptions": "Exception: KeyError('Boooom',)", "types": "<JsonLogger aiologger-json (DEBUG)>"}}
+    
+    await logger.shutdown()
 
 
 loop = asyncio.get_event_loop()
@@ -233,14 +268,18 @@ def rand():
     return randint(1, 100)
 
 
+logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
+
+
 async def main():
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     await logger.info(rand)
     # {"logged_at": "2018-06-14T09:37:52.624123", "line_number": 15, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": 70}
 
     await logger.info({"Xablau": rand})
     # {"logged_at": "2018-06-14T09:37:52.624305", "line_number": 18, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": {"Xablau": 29}}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -266,13 +305,15 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, flatten=True)
+    logger = JsonLogger.with_default_handlers(level=logging.DEBUG, flatten=True)
 
     await logger.info({"status_code": 200, "response_time": 0.00534534})
     # {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446985", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
     # {"status_code": 200, "response_time": 0.534534, "logged_at": "2017-08-11T16:18:58.446986", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -281,7 +322,7 @@ loop.close()
 
 As a method parameter, only the specific call would add the content to the root.
 
-``` python
+```python
 import asyncio
 import logging
 from aiologger.loggers.json import JsonLogger
@@ -295,6 +336,8 @@ async def main():
     
     await logger.error({"status_code": 404, "response_time": 0.00134534})
     # {"logged_at": "2017-08-11T16:23:16.312618", "line_number": 8, "function": "<module>", "level": "ERROR", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py", "msg": {"status_code": 404, "response_time": 0.00134534}}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -310,10 +353,12 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
+    logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     await logger.info({'logged_at': 'Yesterday'}, flatten=True)
     # {"logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -335,13 +380,15 @@ async def main():
     a = 69
     b = 666
     c = [a, b]
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
+    logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     await logger.info("I'm a simple log")
     # {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 5, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info({"dog": "Xablau"}, extra=locals())
     # {"logged_at": "2018-06-14T09:47:29.477705", "line_number": 14, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": {"dog": "Xablau"}, "logger": "<JsonLogger aiologger-json (DEBUG)>", "c": [69, 666], "b": 666, "a": 69}
+    
+    await logger.shutdown()
 
 
 loop = asyncio.get_event_loop()
@@ -358,13 +405,15 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG)
+    logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
     await logger.info("I'm a simple log")
     # {"msg": "I'm a simple log", "logged_at": "2017-08-11T12:21:05.722216", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info("I'm a simple log", extra={'logged_at': 'Yesterday'})
     # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -380,13 +429,15 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(level=logging.DEBUG, extra={'logged_at': 'Yesterday'})
+    logger = JsonLogger.with_default_handlers(level=logging.DEBUG, extra={'logged_at': 'Yesterday'})
 
     await logger.info("I'm a simple log")
     # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
     
     await logger.info("I'm a simple log")
     # {"msg": "I'm a simple log", "logged_at": "Yesterday", "line_number": 6, "function": "<module>", "level": "INFO", "path": "/Users/diogo/PycharmProjects/aiologger/bla.py"}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -407,7 +458,7 @@ from aiologger.formatters.json import FUNCTION_NAME_FIELDNAME, LOGGED_AT_FIELDNA
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(
+    logger = JsonLogger.with_default_handlers(
         level=logging.DEBUG,
         exclude_fields=[FUNCTION_NAME_FIELDNAME,
                         LOGGED_AT_FIELDNAME,
@@ -417,6 +468,8 @@ async def main():
 
     await logger.info("Function, file path and line number wont be printed")
     # {"level": "INFO", "msg": "Function, file path and line number wont be printed"}
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
@@ -438,7 +491,7 @@ from aiologger.loggers.json import JsonLogger
 
 
 async def main():
-    logger = await JsonLogger.with_default_handlers(
+    logger = JsonLogger.with_default_handlers(
         level=logging.DEBUG,
         serializer_kwargs={'indent': 4}
     )
@@ -447,6 +500,8 @@ async def main():
         "artist": "Black Country Communion",
         "song": "Cold"
     })
+    
+    await logger.shutdown()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
