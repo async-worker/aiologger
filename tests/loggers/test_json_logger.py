@@ -3,9 +3,7 @@ import json
 import inspect
 import logging
 import os
-import sys
 from datetime import datetime, timezone, timedelta
-from distutils.version import LooseVersion
 from typing import Tuple
 from unittest.mock import Mock, patch
 
@@ -118,10 +116,14 @@ class JsonLoggerTests(asynctest.TestCase):
                          'test_it_logs_current_function_name')
 
     async def test_it_logs_exceptions_tracebacks(self):
+        class MyException(Exception):
+            def __repr__(self):
+                return "I'm an error"
+
         exception_message = "Carros importados pra garantir os translados"
 
         try:
-            raise Exception(exception_message)
+            raise MyException(exception_message)
         except Exception:
             await self.logger.exception("Aqui nao eh GTA, eh pior, eh Grajau")
 
@@ -129,13 +131,11 @@ class JsonLoggerTests(asynctest.TestCase):
         json_log = json.loads(logged_content)
 
         exc_class, exc_message, exc_traceback = json_log['exc_info']
-        if sys.version < LooseVersion('3.7'):
-            self.assertEqual(f"Exception: Exception('{exception_message}',)", exc_message)
-        else:
-            self.assertEqual(f"Exception: Exception('{exception_message}')", exc_message)
+        self.assertEqual(f"Exception: I'm an error", exc_message)
+
         current_func_name = inspect.currentframe().f_code.co_name
         self.assertIn(current_func_name, exc_traceback[0])
-        self.assertIn('raise Exception(exception_message)', exc_traceback[1])
+        self.assertIn('raise MyException(exception_message)', exc_traceback[1])
 
     async def test_log_makes_a_record_with_build_exc_info_from_exception(self):
         try:
@@ -153,10 +153,14 @@ class JsonLoggerTests(asynctest.TestCase):
                 self.assertEqual(exc, e)
 
     async def test_it_logs_exc_info_from_exceptions(self):
+        class MyException(Exception):
+            def __repr__(self):
+                return "I'm an error"
+
         exception_message = "Carros importados pra garantir os translados"
 
         try:
-            raise Exception(exception_message)
+            raise MyException(exception_message)
         except Exception as e:
             await self.logger.warning("Aqui nao eh GTA, eh pior, eh Grajau", exc_info=e)
 
@@ -164,12 +168,11 @@ class JsonLoggerTests(asynctest.TestCase):
         json_log = json.loads(logged_content)
 
         exc_class, exc_message, exc_traceback = json_log['exc_info']
-        self.assertEqual(f"Exception: Exception('{exception_message}',)",
-                         exc_message)
+        self.assertEqual(f"Exception: I'm an error", exc_message)
 
         current_func_name = inspect.currentframe().f_code.co_name
         self.assertIn(current_func_name, exc_traceback[0])
-        self.assertIn('raise Exception(exception_message)', exc_traceback[1])
+        self.assertIn('raise MyException(exception_message)', exc_traceback[1])
 
     @freeze_time("2018-07-19T08:20:00+00:00")
     async def test_it_logs_datetime_objects(self):
