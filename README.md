@@ -186,8 +186,8 @@ You may notice that the order between the same handler is guaranteed. E.g.:
 
 ## Lazy initialization
 
-Since the actual stream initialization only happens on the first log call, its 
-possible to initialize the `aiologger.Logger` instances outside a running event
+Since the actual stream initialization only happens on the first log call, it's 
+possible to initialize `aiologger.Logger` instances outside a running event
 loop:
 
 
