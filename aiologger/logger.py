@@ -240,8 +240,7 @@ class Logger(logging.Logger):
                 continue
             try:
                 if self._initialized:
-                    await handler.flush()
-                    handler.close()
+                    await handler.close()
 
             except Exception:
                 """

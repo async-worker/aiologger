@@ -1,8 +1,11 @@
 import asyncio
-from logging import StreamHandler, Filter, Formatter, LogRecord
+import os
 from asyncio import StreamWriter
 from io import TextIOBase
+from logging import StreamHandler, Filter, Formatter, LogRecord, Handler
 from typing import Union, Type
+
+import aiofiles
 
 from aiologger.protocols import AiologgerProtocol
 
@@ -85,7 +88,7 @@ class AsyncStreamHandler(StreamHandler):
         except Exception:
             await self.handleError(record)
 
-    def close(self):
+    async def close(self):
         """
         Tidy up any resources used by the handler.
 
@@ -94,4 +97,45 @@ class AsyncStreamHandler(StreamHandler):
         should ensure that this gets called from overridden close()
         methods.
         """
+        await self.flush()
         self.stream.close()
+
+
+class AsyncFileHandler(AsyncStreamHandler):
+    def __init__(self,
+                 filename: str,
+                 mode: str = 'a',
+                 encoding: str = None):
+        filename = os.fspath(filename)
+        self.absolute_file_path = os.path.abspath(filename)
+        self.mode = mode
+        self.encoding = encoding
+        self.stream = None
+        self._intialization_lock = asyncio.Lock()
+        Handler.__init__(self)
+
+    async def _init_stream(self):
+        async with self._intialization_lock:
+            if self.stream is None:
+                self.stream = await aiofiles.open(
+                    file=self.absolute_file_path,
+                    mode=self.mode,
+                    encoding=self.encoding
+                )
+
+    async def close(self):
+        if not self.stream:
+            return
+        if hasattr(self.stream, "flush"):
+            await self.stream.flush()
+        await self.stream.close()
+
+    async def emit(self, record: LogRecord):
+        if self.stream is None:
+            await self._init_stream()
+
+        try:
+            msg = self.format(record) + self.terminator
+            await self.stream.write(msg)
+        except Exception as e:
+            await self.handleError(record)
