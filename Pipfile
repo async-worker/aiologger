@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+aiofiles = "==0.4.0"
 
 [dev-packages]
 pytest = "*"
