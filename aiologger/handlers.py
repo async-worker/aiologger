@@ -1,50 +1,48 @@
 import asyncio
-from logging import StreamHandler, Filter, Formatter, LogRecord
+from logging import StreamHandler, Filter, Formatter, LogRecord, NOTSET
 from asyncio import StreamWriter
-from io import TextIOBase
-from typing import Union, Type
+from typing import Union, Optional
 
 from aiologger.protocols import AiologgerProtocol
 
 
 class AsyncStreamHandler(StreamHandler):
     def __init__(self,
-                 stream: StreamWriter,
-                 level: Union[int, str],
-                 formatter: Formatter,
+                 stream=None,
+                 level: Union[int, str] = NOTSET,
+                 formatter: Formatter = None,
                  filter: Filter = None):
         super().__init__(stream)
+        self.loop = asyncio.get_event_loop()
         self.setLevel(level)
-        self.setFormatter(formatter)
-
+        self.formatter = formatter
         if filter:
             self.addFilter(filter)
+        self.protocol_class = AiologgerProtocol
+        self._initialization_lock = asyncio.Lock()
+        self.writer: Optional[StreamWriter] = None
 
-    @classmethod
-    async def init_from_pipe(cls, *,
-                             pipe: TextIOBase,
-                             level: Union[int, str],
-                             formatter: Formatter,
-                             filter: Filter = None,
-                             protocol_factory: Type[asyncio.Protocol] = None,
-                             loop=None) -> 'AsyncStreamHandler':
-        if loop is None:
-            loop = asyncio.get_event_loop()
+    def createLock(self) -> None:
+        """
+        Does nothing. There's aiologger does not intend to be threadsafe
+        """
+        self.lock = None
 
-        if protocol_factory is None:
-            protocol_factory = AiologgerProtocol
+    async def _init_writer(self) -> None:
+        async with self._initialization_lock:
+            if self.writer is not None:
+                return
 
-        transport, protocol = await loop.connect_write_pipe(protocol_factory,
-                                                            pipe)
-        stream_writer = StreamWriter(transport=transport,
-                                     protocol=protocol,
-                                     reader=None,
-                                     loop=loop)
-
-        return AsyncStreamHandler(level=level,
-                                  stream=stream_writer,
-                                  formatter=formatter,
-                                  filter=filter)
+            transport, protocol = await self.loop.connect_write_pipe(
+                protocol_factory=self.protocol_class,
+                pipe=self.stream
+            )
+            self.writer = StreamWriter(
+                transport=transport,
+                protocol=protocol,
+                reader=None,
+                loop=self.loop
+            )
 
     async def handleError(self, record: LogRecord):
         """
@@ -71,21 +69,24 @@ class AsyncStreamHandler(StreamHandler):
         return rv
 
     async def flush(self):
-        await self.stream.drain()
+        await self.writer.drain()
 
     async def emit(self, record: LogRecord):
         """
         Actually log the specified logging record to the stream.
         """
+        if self.writer is None:
+            await self._init_writer()
+
         try:
             msg = self.format(record) + self.terminator
 
-            await self.stream.write(msg.encode())
-            await self.stream.drain()
+            await self.writer.write(msg.encode())
+            await self.writer.drain()
         except Exception:
             await self.handleError(record)
 
-    def close(self):
+    async def close(self):
         """
         Tidy up any resources used by the handler.
 
@@ -94,4 +95,7 @@ class AsyncStreamHandler(StreamHandler):
         should ensure that this gets called from overridden close()
         methods.
         """
-        self.stream.close()
+        if self.writer is None:
+            return
+        await self.flush()
+        self.writer.close()
