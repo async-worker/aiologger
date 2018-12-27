@@ -20,5 +20,5 @@ python_version = "3.6"
 [scripts]
 test = "py.test -v --cov=./aiologger --cov-report term-missing -v"
 lint = "mypy ./ --ignore-missing-imports"
-fmt = "black --py36 -v --liwne-length 80 ."
+fmt = "black --py36 -v --line-length 80 ."
 fmt-check = "black --py36 -v --line-length 80 --check ."
