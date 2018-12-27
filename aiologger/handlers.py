@@ -8,11 +8,13 @@ from aiologger.protocols import AiologgerProtocol
 
 
 class AsyncStreamHandler(StreamHandler):
-    def __init__(self,
-                 stream: StreamWriter,
-                 level: Union[int, str],
-                 formatter: Formatter,
-                 filter: Filter = None):
+    def __init__(
+        self,
+        stream: StreamWriter,
+        level: Union[int, str],
+        formatter: Formatter,
+        filter: Filter = None,
+    ):
         super().__init__(stream)
         self.setLevel(level)
         self.setFormatter(formatter)
@@ -21,30 +23,35 @@ class AsyncStreamHandler(StreamHandler):
             self.addFilter(filter)
 
     @classmethod
-    async def init_from_pipe(cls, *,
-                             pipe: TextIOBase,
-                             level: Union[int, str],
-                             formatter: Formatter,
-                             filter: Filter = None,
-                             protocol_factory: Type[asyncio.Protocol] = None,
-                             loop=None) -> 'AsyncStreamHandler':
+    async def init_from_pipe(
+        cls,
+        *,
+        pipe: TextIOBase,
+        level: Union[int, str],
+        formatter: Formatter,
+        filter: Filter = None,
+        protocol_factory: Type[asyncio.Protocol] = None,
+        loop=None,
+    ) -> "AsyncStreamHandler":
         if loop is None:
             loop = asyncio.get_event_loop()
 
         if protocol_factory is None:
             protocol_factory = AiologgerProtocol
 
-        transport, protocol = await loop.connect_write_pipe(protocol_factory,
-                                                            pipe)
-        stream_writer = StreamWriter(transport=transport,
-                                     protocol=protocol,
-                                     reader=None,
-                                     loop=loop)
+        transport, protocol = await loop.connect_write_pipe(
+            protocol_factory, pipe
+        )
+        stream_writer = StreamWriter(
+            transport=transport, protocol=protocol, reader=None, loop=loop
+        )
 
-        return AsyncStreamHandler(level=level,
-                                  stream=stream_writer,
-                                  formatter=formatter,
-                                  filter=filter)
+        return AsyncStreamHandler(
+            level=level,
+            stream=stream_writer,
+            formatter=formatter,
+            filter=filter,
+        )
 
     async def handleError(self, record: LogRecord):
         """

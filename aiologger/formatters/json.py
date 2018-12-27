@@ -6,18 +6,20 @@ from inspect import istraceback
 from typing import Callable, Iterable
 from datetime import timezone
 
-LOGGED_AT_FIELDNAME = 'logged_at'
-LINE_NUMBER_FIELDNAME = 'line_number'
-FUNCTION_NAME_FIELDNAME = 'function'
-LOG_LEVEL_FIELDNAME = 'level'
-MSG_FIELDNAME = 'msg'
-FILE_PATH_FIELDNAME = 'file_path'
+LOGGED_AT_FIELDNAME = "logged_at"
+LINE_NUMBER_FIELDNAME = "line_number"
+FUNCTION_NAME_FIELDNAME = "function"
+LOG_LEVEL_FIELDNAME = "level"
+MSG_FIELDNAME = "msg"
+FILE_PATH_FIELDNAME = "file_path"
 
 
 class JsonFormatter(logging.Formatter):
-    def __init__(self,
-                 serializer: Callable[..., str] = json.dumps,
-                 default_msg_fieldname: str = None):
+    def __init__(
+        self,
+        serializer: Callable[..., str] = json.dumps,
+        default_msg_fieldname: str = None,
+    ):
         super(JsonFormatter, self).__init__()
         self.serializer = serializer
 
@@ -27,8 +29,8 @@ class JsonFormatter(logging.Formatter):
         if isinstance(obj, datetime):
             return obj.isoformat()
         elif istraceback(obj):
-            tb = ''.join(traceback.format_tb(obj))
-            return tb.strip().split('\n')
+            tb = "".join(traceback.format_tb(obj))
+            return tb.strip().split("\n")
         elif isinstance(obj, Exception):
             return "Exception: %s" % repr(obj)
         elif type(obj) is type:
@@ -48,32 +50,35 @@ class JsonFormatter(logging.Formatter):
             msg = {self.default_msg_fieldname: msg}
 
         if record.exc_info:
-            msg['exc_info'] = record.exc_info
+            msg["exc_info"] = record.exc_info
         if record.exc_text:
-            msg['exc_text'] = record.exc_text
+            msg["exc_text"] = record.exc_text
 
         return self.serializer(msg, default=self._default_handler)
 
 
 class ExtendedJsonFormatter(JsonFormatter):
     level_to_name_mapping = logging._levelToName
-    default_fields = frozenset([
-        LOG_LEVEL_FIELDNAME,
-        LOGGED_AT_FIELDNAME,
-        LINE_NUMBER_FIELDNAME,
-        FUNCTION_NAME_FIELDNAME,
-        FILE_PATH_FIELDNAME
-    ])
+    default_fields = frozenset(
+        [
+            LOG_LEVEL_FIELDNAME,
+            LOGGED_AT_FIELDNAME,
+            LINE_NUMBER_FIELDNAME,
+            FUNCTION_NAME_FIELDNAME,
+            FILE_PATH_FIELDNAME,
+        ]
+    )
 
-    def __init__(self,
-                 serializer: Callable[..., str] = json.dumps,
-                 default_msg_fieldname: str = None,
-                 exclude_fields: Iterable[str] = None,
-                 tz: timezone = None):
+    def __init__(
+        self,
+        serializer: Callable[..., str] = json.dumps,
+        default_msg_fieldname: str = None,
+        exclude_fields: Iterable[str] = None,
+        tz: timezone = None,
+    ):
 
         super(ExtendedJsonFormatter, self).__init__(
-            serializer=serializer,
-            default_msg_fieldname=default_msg_fieldname
+            serializer=serializer, default_msg_fieldname=default_msg_fieldname
         )
         self.tz = tz
         if exclude_fields is None:
@@ -85,14 +90,16 @@ class ExtendedJsonFormatter(JsonFormatter):
         """
         :type record: aiologger.loggers.json.LogRecord
         """
-        datetime_serialized = datetime.now(timezone.utc).astimezone(self.tz).isoformat()
+        datetime_serialized = (
+            datetime.now(timezone.utc).astimezone(self.tz).isoformat()
+        )
 
         default_fields = (
             (LOGGED_AT_FIELDNAME, datetime_serialized),
             (LINE_NUMBER_FIELDNAME, record.lineno),
             (FUNCTION_NAME_FIELDNAME, record.funcName),
             (LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),
-            (FILE_PATH_FIELDNAME, record.pathname)
+            (FILE_PATH_FIELDNAME, record.pathname),
         )
 
         for field, value in default_fields:
@@ -112,10 +119,10 @@ class ExtendedJsonFormatter(JsonFormatter):
         if record.extra:
             msg.update(record.extra)
         if record.exc_info:
-            msg['exc_info'] = record.exc_info
+            msg["exc_info"] = record.exc_info
         if record.exc_text:
-            msg['exc_text'] = record.exc_text
+            msg["exc_text"] = record.exc_text
 
-        return self.serializer(msg,
-                               default=self._default_handler,
-                               **record.serializer_kwargs)
+        return self.serializer(
+            msg, default=self._default_handler, **record.serializer_kwargs
+        )
