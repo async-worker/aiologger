@@ -6,7 +6,6 @@ from typing import Iterable, Optional, Callable, Awaitable, Tuple
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
-from aiologger.protocols import AiologgerProtocol
 
 
 _Caller = Tuple[str, int, str, Optional[str]]
@@ -17,59 +16,41 @@ class Logger(logging.Logger):
     def __init__(self, *,
                  name='aiologger',
                  level=logging.NOTSET,
-                 loop=None,
-                 formatter: Optional[logging.Formatter] = logging.Formatter,
-                 handler_factory: Optional[_HandlerFactory] = None):
+                 loop=None):
         super(Logger, self).__init__(name, level)
         self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
-        self._handler_factory = handler_factory or (lambda: Logger._create_default_handlers(formatter, loop))
-        self.initialized = False
-        self._initializing = Lock()
-        self._initialized = False
         self._was_shutdown = False
 
         async def _dummy(*args, **kwargs): return
         self.__dummy_task = self.loop.create_task(_dummy())
 
     @classmethod
-    def with_default_handlers(cls, *, name='aiologger',
+    def with_default_handlers(cls, *,
+                              name='aiologger',
                               level=logging.NOTSET,
                               formatter: Optional[logging.Formatter] = None,
                               loop=None,
                               **kwargs):
-        self = cls(name=name, level=level, loop=loop, formatter=formatter, **kwargs)
+        self = cls(name=name, level=level, loop=loop, **kwargs)
+        if formatter is None:
+            formatter = logging.Formatter()
+        self.addHandler(
+            AsyncStreamHandler(
+                stream=sys.stdout,
+                level=logging.DEBUG,
+                formatter=formatter,
+                filter=StdoutFilter()
+            )
+        )
+        self.addHandler(
+            AsyncStreamHandler(
+                stream=sys.stderr,
+                level=logging.WARNING,
+                formatter=formatter
+            )
+        )
 
         return self
-
-    @classmethod
-    async def _create_default_handlers(cls,
-                                       formatter: logging.Formatter = None,
-                                       loop=None) -> Iterable[logging.Handler]:
-
-        stdout_handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=sys.stdout,
-            level=logging.DEBUG,
-            protocol_factory=AiologgerProtocol,
-            formatter=formatter,
-            filter=StdoutFilter(),
-            loop=loop)
-
-        stderr_handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=sys.stderr,
-            level=logging.WARNING,
-            protocol_factory=AiologgerProtocol,
-            formatter=formatter,
-            loop=loop)
-        return [stdout_handler, stderr_handler]
-
-    async def _initialize(self):
-        if not self._initialized:
-            async with self._initializing:
-                if self._initialized:
-                    return
-                for handler in await self._handler_factory():
-                    self.addHandler(handler)
-                self._initialized = True
 
     async def callHandlers(self, record):
         """
@@ -102,8 +83,6 @@ class Logger(logging.Logger):
         This method is used for unpickled records received from a socket, as
         well as those created locally. Logger-level filtering is applied.
         """
-        await self._initialize()
-
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
 
@@ -239,9 +218,9 @@ class Logger(logging.Logger):
             if not handler:
                 continue
             try:
-                if self._initialized:
+                if handler.initialized:
                     await handler.flush()
-                    handler.close()
+                    await handler.close()
 
             except Exception:
                 """

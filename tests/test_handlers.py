@@ -67,13 +67,14 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             formatter=Mock()
         )
 
-        self.assertIsNone(handler.writer)
+        self.assertFalse(handler.initialized)
 
         await handler._init_writer()
 
         self.assertIsInstance(handler.writer, asyncio.StreamWriter)
         self.assertIsInstance(handler.writer._protocol, AiologgerProtocol)
         self.assertEqual(handler.writer.transport._pipe, self.write_pipe)
+        self.assertTrue(handler.initialized)
 
     async def test_emit_writes_records_into_the_stream(self):
         msg = self.record.msg
@@ -87,7 +88,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
 
             await handler.emit(self.record)
 
-            writer.write.assert_awaited_once_with((msg + handler.terminator).encode())
+            writer.write.assert_called_once_with((msg + handler.terminator).encode())
             writer.drain.assert_awaited_once()
 
     async def test_emit_calls_handleError_if_an_erro_occurs(self):
@@ -124,10 +125,14 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             emit.assert_not_awaited()
 
     async def test_close_closes_the_underlying_transport(self):
-        handler = AsyncStreamHandler(stream=self.write_pipe,
-                                     level=10,
-                                     formatter=Mock())
+        handler = AsyncStreamHandler(stream=self.write_pipe, level=10)
         await handler._init_writer()
         self.assertFalse(handler.writer.transport.is_closing())
         await handler.close()
         self.assertTrue(handler.writer.transport.is_closing())
+
+    async def test_initialized_returns_true_if_writer_is_initialized(self):
+        handler = AsyncStreamHandler(stream=self.write_pipe, level=10)
+        self.assertFalse(handler.initialized)
+        await handler._init_writer()
+        self.assertTrue(handler.initialized)

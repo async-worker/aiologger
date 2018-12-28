@@ -22,6 +22,10 @@ class AsyncStreamHandler(StreamHandler):
         self._initialization_lock = asyncio.Lock()
         self.writer: Optional[StreamWriter] = None
 
+    @property
+    def initialized(self):
+        return self.writer is not None
+
     def createLock(self) -> None:
         """
         Does nothing. There's aiologger does not intend to be threadsafe
@@ -81,7 +85,7 @@ class AsyncStreamHandler(StreamHandler):
         try:
             msg = self.format(record) + self.terminator
 
-            await self.writer.write(msg.encode())
+            self.writer.write(msg.encode())
             await self.writer.drain()
         except Exception:
             await self.handleError(record)
