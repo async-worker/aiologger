@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import sys
-from asyncio import Lock, AbstractEventLoop, Task
+from asyncio import AbstractEventLoop, Task
 from typing import Iterable, Optional, Callable, Awaitable, Tuple
 
 from aiologger.filters import StdoutFilter
