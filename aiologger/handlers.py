@@ -53,7 +53,7 @@ class AsyncStreamHandler(StreamHandler):
             filter=filter,
         )
 
-    async def handleError(self, record: LogRecord):
+    async def handleError(self, record: LogRecord):  # type: ignore
         """
         Handle errors which occur during an emit() call.
 
@@ -67,7 +67,7 @@ class AsyncStreamHandler(StreamHandler):
         """
         pass  # pragma: no cover
 
-    async def handle(self, record: LogRecord) -> bool:
+    async def handle(self, record: LogRecord) -> bool:  # type: ignore
         """
         Conditionally emit the specified logging record.
         Emission depends on filters which may have been added to the handler.
@@ -80,7 +80,7 @@ class AsyncStreamHandler(StreamHandler):
     async def flush(self):
         await self.stream.drain()
 
-    async def emit(self, record: LogRecord):
+    async def emit(self, record: LogRecord):  # type: ignore
         """
         Actually log the specified logging record to the stream.
         """

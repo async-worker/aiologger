@@ -134,7 +134,7 @@ class Logger(logging.Logger):
     ):
 
         sinfo = None
-        if logging._srcfile and caller is None:
+        if logging._srcfile and caller is None:  # type: ignore
             # IronPython doesn't track Python frames, so findCaller raises an
             # exception on some versions of IronPython. We trap it here so that
             # IronPython can use logging.
@@ -180,7 +180,7 @@ class Logger(logging.Logger):
         )
         return self.loop.create_task(coro)
 
-    def debug(self, msg, *args, **kwargs) -> Task:
+    def debug(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'DEBUG'.
 
@@ -191,7 +191,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.DEBUG, msg, args, **kwargs)
 
-    def info(self, msg, *args, **kwargs) -> Task:
+    def info(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'INFO'.
 
@@ -202,7 +202,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.INFO, msg, args, **kwargs)
 
-    def warning(self, msg, *args, **kwargs) -> Task:
+    def warning(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'WARNING'.
 
@@ -213,7 +213,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.WARNING, msg, args, **kwargs)
 
-    def error(self, msg, *args, **kwargs) -> Task:
+    def error(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'ERROR'.
 
@@ -224,7 +224,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.ERROR, msg, args, **kwargs)
 
-    def critical(self, msg, *args, **kwargs) -> Task:
+    def critical(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'CRITICAL'.
 
@@ -235,7 +235,9 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.CRITICAL, msg, args, **kwargs)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs) -> Task:
+    def exception(  # type: ignore
+        self, msg, *args, exc_info=True, **kwargs
+    ) -> Task:
         """
         Convenience method for logging an ERROR with exception information.
         """

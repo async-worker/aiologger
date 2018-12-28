@@ -71,7 +71,7 @@ class JsonLogger(Logger):
         self.extra = extra
 
     @classmethod
-    def with_default_handlers(
+    def with_default_handlers(  # type: ignore
         cls,
         *,
         name: str = "aiologger-json",
@@ -96,7 +96,7 @@ class JsonLogger(Logger):
             tz=tz,
         )
 
-    async def _log(
+    async def _log(  # type: ignore
         self,
         level: int,
         msg: Any,
