@@ -252,7 +252,7 @@ class LoggerTests(asynctest.TestCase):
         current_func_name = inspect.currentframe().f_code.co_name
 
         self.assertIn(current_func_name.encode(), logged_content)
-        self.assertIn(b"raise Exception('Xablau')", logged_content)
+        self.assertIn(b'raise Exception("Xablau")', logged_content)
 
     async def test_shutdown_doest_not_closes_handlers_if_not_initialized(self):
         handler_factory = CoroutineMock(
