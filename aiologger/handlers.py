@@ -34,20 +34,22 @@ class AsyncStreamHandler(StreamHandler):
         """
         self.lock = None
 
-    async def _init_writer(self) -> None:
+    async def _init_writer(self) -> StreamWriter:
         async with self._initialization_lock:
             if self.writer is not None:
-                return
+                return self.writer
 
             transport, protocol = await self.loop.connect_write_pipe(
                 protocol_factory=self.protocol_class, pipe=self.stream
             )
-            self.writer = StreamWriter(
+
+            self.writer = StreamWriter(  # type: ignore # bla
                 transport=transport,
                 protocol=protocol,
                 reader=None,
                 loop=self.loop,
             )
+            return self.writer
 
     async def handleError(self, record: LogRecord):  # type: ignore
         """
@@ -81,7 +83,7 @@ class AsyncStreamHandler(StreamHandler):
         Actually log the specified logging record to the stream.
         """
         if self.writer is None:
-            await self._init_writer()
+            self.writer = await self._init_writer()
 
         try:
             msg = self.format(record) + self.terminator

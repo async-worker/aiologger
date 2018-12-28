@@ -40,7 +40,7 @@ class JsonLogger(Logger):
         serializer_kwargs: Dict = None,
         extra: Dict = None,
         loop: AbstractEventLoop = None,
-    ):
+    ) -> None:
         super().__init__(name=name, level=level, loop=loop)
 
         self.flatten = flatten

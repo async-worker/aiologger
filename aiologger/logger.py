@@ -35,7 +35,7 @@ class Logger(logging.Logger):
         loop=None,
         **kwargs,
     ):
-        self = cls(name=name, level=level, loop=loop, **kwargs)
+        self = cls(name=name, level=level, loop=loop, **kwargs)  # type: ignore
         if formatter is None:
             formatter = logging.Formatter()
         self.addHandler(
@@ -115,7 +115,7 @@ class Logger(logging.Logger):
         if exc_info and isinstance(exc_info, BaseException):
             exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
 
-        record = logging.LogRecord(
+        record = logging.LogRecord(  # type: ignore
             name=self.name,
             level=level,
             pathname=fn,
@@ -141,7 +141,7 @@ class Logger(logging.Logger):
             if not isinstance(kwargs["exc_info"], BaseException):
                 kwargs["exc_info"] = sys.exc_info()
 
-        coro = self._log(
+        coro = self._log(  # type: ignore
             level, msg, *args, caller=self.findCaller(False), **kwargs
         )
         return self.loop.create_task(coro)
