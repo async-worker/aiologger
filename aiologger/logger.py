@@ -22,7 +22,7 @@ class Logger(logging.Logger):
         loop=None,
         formatter: Optional[logging.Formatter] = logging.Formatter,
         handler_factory: Optional[_HandlerFactory] = None,
-    ):
+    ) -> None:
         super(Logger, self).__init__(name, level)
         self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
         self._handler_factory = handler_factory or (

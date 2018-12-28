@@ -14,7 +14,7 @@ class AsyncStreamHandler(StreamHandler):
         level: Union[int, str],
         formatter: Formatter,
         filter: Filter = None,
-    ):
+    ) -> None:
         super().__init__(stream)
         self.setLevel(level)
         self.setFormatter(formatter)
@@ -42,7 +42,7 @@ class AsyncStreamHandler(StreamHandler):
         transport, protocol = await loop.connect_write_pipe(
             protocol_factory, pipe
         )
-        stream_writer = StreamWriter(
+        stream_writer = StreamWriter(  # type: ignore
             transport=transport, protocol=protocol, reader=None, loop=loop
         )
 

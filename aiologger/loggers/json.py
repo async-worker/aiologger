@@ -48,7 +48,7 @@ class JsonLogger(Logger):
         handler_factory: Optional[
             Callable[[], Awaitable[Iterable[logging.Handler]]]
         ] = None,
-    ):
+    ) -> None:
         formatter = formatter or ExtendedJsonFormatter(
             serializer=serializer, exclude_fields=exclude_fields, tz=tz
         )
