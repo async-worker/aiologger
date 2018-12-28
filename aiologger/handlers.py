@@ -7,11 +7,13 @@ from aiologger.protocols import AiologgerProtocol
 
 
 class AsyncStreamHandler(StreamHandler):
-    def __init__(self,
-                 stream=None,
-                 level: Union[int, str] = NOTSET,
-                 formatter: Formatter = None,
-                 filter: Filter = None):
+    def __init__(
+        self,
+        stream=None,
+        level: Union[int, str] = NOTSET,
+        formatter: Formatter = None,
+        filter: Filter = None,
+    ):
         super().__init__(stream)
         self.loop = asyncio.get_event_loop()
         self.setLevel(level)
@@ -38,14 +40,13 @@ class AsyncStreamHandler(StreamHandler):
                 return
 
             transport, protocol = await self.loop.connect_write_pipe(
-                protocol_factory=self.protocol_class,
-                pipe=self.stream
+                protocol_factory=self.protocol_class, pipe=self.stream
             )
             self.writer = StreamWriter(
                 transport=transport,
                 protocol=protocol,
                 reader=None,
-                loop=self.loop
+                loop=self.loop,
             )
 
     async def handleError(self, record: LogRecord):

@@ -13,24 +13,26 @@ _HandlerFactory = Callable[[], Awaitable[Iterable[logging.Handler]]]
 
 
 class Logger(logging.Logger):
-    def __init__(self, *,
-                 name='aiologger',
-                 level=logging.NOTSET,
-                 loop=None):
+    def __init__(self, *, name="aiologger", level=logging.NOTSET, loop=None):
         super(Logger, self).__init__(name, level)
         self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
         self._was_shutdown = False
 
-        async def _dummy(*args, **kwargs): return
+        async def _dummy(*args, **kwargs):
+            return
+
         self.__dummy_task = self.loop.create_task(_dummy())
 
     @classmethod
-    def with_default_handlers(cls, *,
-                              name='aiologger',
-                              level=logging.NOTSET,
-                              formatter: Optional[logging.Formatter] = None,
-                              loop=None,
-                              **kwargs):
+    def with_default_handlers(
+        cls,
+        *,
+        name="aiologger",
+        level=logging.NOTSET,
+        formatter: Optional[logging.Formatter] = None,
+        loop=None,
+        **kwargs,
+    ):
         self = cls(name=name, level=level, loop=loop, **kwargs)
         if formatter is None:
             formatter = logging.Formatter()
@@ -39,14 +41,12 @@ class Logger(logging.Logger):
                 stream=sys.stdout,
                 level=logging.DEBUG,
                 formatter=formatter,
-                filter=StdoutFilter()
+                filter=StdoutFilter(),
             )
         )
         self.addHandler(
             AsyncStreamHandler(
-                stream=sys.stderr,
-                level=logging.WARNING,
-                formatter=formatter
+                stream=sys.stderr, level=logging.WARNING, formatter=formatter
             )
         )
 
@@ -86,14 +86,16 @@ class Logger(logging.Logger):
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
 
-    async def _log(self,
-                   level,
-                   msg,
-                   args,
-                   exc_info=None,
-                   extra=None,
-                   stack_info=False,
-                   caller: _Caller = None):
+    async def _log(
+        self,
+        level,
+        msg,
+        args,
+        exc_info=None,
+        extra=None,
+        stack_info=False,
+        caller: _Caller = None,
+    ):
 
         sinfo = None
         if logging._srcfile and caller is None:
@@ -121,7 +123,7 @@ class Logger(logging.Logger):
             exc_info=exc_info,
             func=func,
             sinfo=sinfo,
-            extra=extra
+            extra=extra,
         )
         await self.handle(record)
 
@@ -133,13 +135,13 @@ class Logger(logging.Logger):
         if not self.isEnabledFor(level):
             return self.__dummy_task
 
-        if kwargs.get('exc_info', False):
-            if not isinstance(kwargs['exc_info'], BaseException):
-                kwargs['exc_info'] = sys.exc_info()
+        if kwargs.get("exc_info", False):
+            if not isinstance(kwargs["exc_info"], BaseException):
+                kwargs["exc_info"] = sys.exc_info()
 
-        coro = self._log(level, msg, *args,
-                         caller=self.findCaller(False),
-                         **kwargs)
+        coro = self._log(
+            level, msg, *args, caller=self.findCaller(False), **kwargs
+        )
         return self.loop.create_task(coro)
 
     def debug(self, msg, *args, **kwargs) -> Task:

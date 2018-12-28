@@ -9,45 +9,38 @@ class JsonFormatterTests(unittest.TestCase):
     def setUp(self):
         self.record = LogRecord(
             level=30,
-            name='aiologger',
+            name="aiologger",
             pathname="/aiologger/tests/formatters/test_json_formatter.py",
             lineno=42,
             msg="Xablau",
             exc_info=None,
-            args=None
+            args=None,
         )
         self.formatter = JsonFormatter()
 
     def test_default_fieldname_is_overwriteable(self):
-        formatter = JsonFormatter(default_msg_fieldname='dog')
+        formatter = JsonFormatter(default_msg_fieldname="dog")
 
-        self.assertEqual(formatter.default_msg_fieldname, 'dog')
+        self.assertEqual(formatter.default_msg_fieldname, "dog")
         msg = formatter.format(self.record)
-        self.assertEqual(msg, formatter.serializer({'dog': 'Xablau'}))
+        self.assertEqual(msg, formatter.serializer({"dog": "Xablau"}))
 
     def test_format_adds_exceptions_infos(self):
         self.record.exc_info = "Xena"
-        self.record.exc_text = 'Xablito'
+        self.record.exc_text = "Xablito"
 
         self.assertEqual(
             self.formatter.format(self.record),
-            self.formatter.serializer({
-                'msg': 'Xablau',
-                'exc_info': 'Xena',
-                'exc_text': 'Xablito'
-            })
+            self.formatter.serializer(
+                {"msg": "Xablau", "exc_info": "Xena", "exc_text": "Xablito"}
+            ),
         )
 
     def test_format_logs_msg_as_is_if_msg_is_a_dict(self):
-        self.record.msg = {'dog': 'Xablau'}
+        self.record.msg = {"dog": "Xablau"}
 
         msg = self.formatter.format(self.record)
-        self.assertEqual(
-            msg,
-            self.formatter.serializer({
-                'dog': 'Xablau'
-            })
-        )
+        self.assertEqual(msg, self.formatter.serializer({"dog": "Xablau"}))
 
 
 class DefaultHandlerTests(unittest.TestCase):
@@ -62,11 +55,11 @@ class DefaultHandlerTests(unittest.TestCase):
             hour=6,
             minute=6,
             second=6,
-            microsecond=666666
+            microsecond=666_666,
         )
         result = self.formatter._default_handler(obj)
         # Se o objeto datetime tiver microsecond, `.isoformat()` serializa esse valor
-        self.assertEqual(result, '2006-06-06T06:06:06.666666')
+        self.assertEqual(result, "2006-06-06T06:06:06.666666")
 
     def test_it_converts_exceptions_to_strings(self):
         class MyException(Exception):
@@ -91,7 +84,7 @@ class DefaultHandlerTests(unittest.TestCase):
         class MyException(Exception):
             def __init__(self, errors):
                 self.errors = errors
-        
+
         result = self.formatter._default_handler(MyException)
-        
+
         self.assertEqual(result, str(MyException))
