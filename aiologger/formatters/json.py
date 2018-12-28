@@ -3,7 +3,7 @@ import logging
 import traceback
 from datetime import datetime
 from inspect import istraceback
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Union
 from datetime import timezone
 
 LOGGED_AT_FIELDNAME = "logged_at"
@@ -19,7 +19,7 @@ class JsonFormatter(logging.Formatter):
         self,
         serializer: Callable[..., str] = json.dumps,
         default_msg_fieldname: str = None,
-    ):
+    ) -> None:
         super(JsonFormatter, self).__init__()
         self.serializer = serializer
 
@@ -45,14 +45,14 @@ class JsonFormatter(logging.Formatter):
         already a dict, initializes a new dict and uses `default_msg_fieldname`
         as a key as the record msg as the value.
         """
-        msg = record.msg
+        msg: Union[str, dict] = record.msg
         if not isinstance(record.msg, dict):
             msg = {self.default_msg_fieldname: msg}
 
-        if record.exc_info:
+        if record.exc_info:  # type: ignore
             msg["exc_info"] = record.exc_info
-        if record.exc_text:
-            msg["exc_text"] = record.exc_text
+        if record.exc_text:  # type: ignore
+            msg["exc_text"] = record.exc_text  # type: ignore
 
         return self.serializer(msg, default=self._default_handler)
 
@@ -75,7 +75,7 @@ class ExtendedJsonFormatter(JsonFormatter):
         default_msg_fieldname: str = None,
         exclude_fields: Iterable[str] = None,
         tz: timezone = None,
-    ):
+    ) -> None:
 
         super(ExtendedJsonFormatter, self).__init__(
             serializer=serializer, default_msg_fieldname=default_msg_fieldname

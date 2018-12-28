@@ -13,7 +13,9 @@ _HandlerFactory = Callable[[], Awaitable[Iterable[logging.Handler]]]
 
 
 class Logger(logging.Logger):
-    def __init__(self, *, name="aiologger", level=logging.NOTSET, loop=None):
+    def __init__(
+        self, *, name="aiologger", level=logging.NOTSET, loop=None
+    ) -> None:
         super(Logger, self).__init__(name, level)
         self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
         self._was_shutdown = False

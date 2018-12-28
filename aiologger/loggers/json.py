@@ -73,7 +73,7 @@ class JsonLogger(Logger):
                 serializer=serializer, exclude_fields=exclude_fields, tz=tz
             )
         return super(JsonLogger, cls).with_default_handlers(
-            name="aiologger-json",
+            name=name,
             level=level,
             loop=loop,
             flatten=flatten,

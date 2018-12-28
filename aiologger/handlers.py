@@ -13,7 +13,7 @@ class AsyncStreamHandler(StreamHandler):
         level: Union[int, str] = NOTSET,
         formatter: Formatter = None,
         filter: Filter = None,
-    ):
+    ) -> None:
         super().__init__(stream)
         self.loop = asyncio.get_event_loop()
         self.setLevel(level)
