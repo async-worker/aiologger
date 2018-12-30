@@ -36,8 +36,6 @@ class Logger(logging.Logger):
         **kwargs,
     ):
         self = cls(name=name, level=level, loop=loop, **kwargs)  # type: ignore
-        if formatter is None:
-            formatter = logging.Formatter()
         self.addHandler(
             AsyncStreamHandler(
                 stream=sys.stdout,

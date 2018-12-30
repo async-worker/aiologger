@@ -17,6 +17,8 @@ class AsyncStreamHandler(StreamHandler):
         super().__init__(stream)
         self.loop = asyncio.get_event_loop()
         self.setLevel(level)
+        if formatter is None:
+            formatter = Formatter()
         self.formatter = formatter
         if filter:
             self.addFilter(filter)
