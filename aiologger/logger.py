@@ -1,12 +1,11 @@
 import asyncio
 import logging
 import sys
-from asyncio import Lock, AbstractEventLoop, Task
+from asyncio import AbstractEventLoop, Task
 from typing import Iterable, Optional, Callable, Awaitable, Tuple
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
-from aiologger.protocols import AiologgerProtocol
 
 
 _Caller = Tuple[str, int, str, Optional[str]]
@@ -15,28 +14,20 @@ _HandlerFactory = Callable[[], Awaitable[Iterable[logging.Handler]]]
 
 class Logger(logging.Logger):
     def __init__(
-        self,
-        *,
-        name="aiologger",
-        level=logging.NOTSET,
-        loop=None,
-        formatter: Optional[logging.Formatter] = logging.Formatter,
-        handler_factory: Optional[_HandlerFactory] = None,
+        self, *, name="aiologger", level=logging.NOTSET, loop=None
     ) -> None:
         super(Logger, self).__init__(name, level)
-        self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
-        self._handler_factory = handler_factory or (
-            lambda: Logger._create_default_handlers(formatter, loop)
-        )
-        self.initialized = False
-        self._initializing = Lock()
-        self._initialized = False
+        self._loop: Optional[AbstractEventLoop] = loop
         self._was_shutdown = False
 
-        async def _dummy(*args, **kwargs):
-            return
+        self._dummy_task: Optional[Task] = None
 
-        self.__dummy_task = self.loop.create_task(_dummy())
+    @property
+    def loop(self) -> AbstractEventLoop:
+        if self._loop is not None:
+            return self._loop
+        self._loop = asyncio.get_event_loop()
+        return self._loop
 
     @classmethod
     def with_default_handlers(
@@ -48,43 +39,22 @@ class Logger(logging.Logger):
         loop=None,
         **kwargs,
     ):
-        self = cls(
-            name=name, level=level, loop=loop, formatter=formatter, **kwargs
+        self = cls(name=name, level=level, loop=loop, **kwargs)  # type: ignore
+        self.addHandler(
+            AsyncStreamHandler(
+                stream=sys.stdout,
+                level=logging.DEBUG,
+                formatter=formatter,
+                filter=StdoutFilter(),
+            )
+        )
+        self.addHandler(
+            AsyncStreamHandler(
+                stream=sys.stderr, level=logging.WARNING, formatter=formatter
+            )
         )
 
         return self
-
-    @classmethod
-    async def _create_default_handlers(
-        cls, formatter: logging.Formatter = None, loop=None
-    ) -> Iterable[logging.Handler]:
-
-        stdout_handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=sys.stdout,
-            level=logging.DEBUG,
-            protocol_factory=AiologgerProtocol,
-            formatter=formatter,
-            filter=StdoutFilter(),
-            loop=loop,
-        )
-
-        stderr_handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=sys.stderr,
-            level=logging.WARNING,
-            protocol_factory=AiologgerProtocol,
-            formatter=formatter,
-            loop=loop,
-        )
-        return [stdout_handler, stderr_handler]
-
-    async def _initialize(self):
-        if not self._initialized:
-            async with self._initializing:
-                if self._initialized:
-                    return
-                for handler in await self._handler_factory():
-                    self.addHandler(handler)
-                self._initialized = True
 
     async def callHandlers(self, record):
         """
@@ -117,8 +87,6 @@ class Logger(logging.Logger):
         This method is used for unpickled records received from a socket, as
         well as those created locally. Logger-level filtering is applied.
         """
-        await self._initialize()
-
         if (not self.disabled) and self.filter(record):
             await self.callHandlers(record)
 
@@ -134,7 +102,7 @@ class Logger(logging.Logger):
     ):
 
         sinfo = None
-        if logging._srcfile and caller is None:
+        if logging._srcfile and caller is None:  # type: ignore
             # IronPython doesn't track Python frames, so findCaller raises an
             # exception on some versions of IronPython. We trap it here so that
             # IronPython can use logging.
@@ -149,7 +117,7 @@ class Logger(logging.Logger):
         if exc_info and isinstance(exc_info, BaseException):
             exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
 
-        record = logging.LogRecord(
+        record = logging.LogRecord(  # type: ignore
             name=self.name,
             level=level,
             pathname=fn,
@@ -163,24 +131,32 @@ class Logger(logging.Logger):
         )
         await self.handle(record)
 
+    def __make_dummy_task(self) -> Task:
+        async def _dummy(*args, **kwargs):
+            return
+
+        return self.loop.create_task(_dummy())
+
     def _make_log_task(self, level, msg, *args, **kwargs) -> Task:
         """
         Creates an asyncio.Task for a msg if logging is enabled for level.
         Returns a dummy task otherwise.
         """
         if not self.isEnabledFor(level):
-            return self.__dummy_task
+            if self._dummy_task is None:
+                self._dummy_task = self.__make_dummy_task()
+            return self._dummy_task
 
         if kwargs.get("exc_info", False):
             if not isinstance(kwargs["exc_info"], BaseException):
                 kwargs["exc_info"] = sys.exc_info()
 
-        coro = self._log(
+        coro = self._log(  # type: ignore
             level, msg, *args, caller=self.findCaller(False), **kwargs
         )
         return self.loop.create_task(coro)
 
-    def debug(self, msg, *args, **kwargs) -> Task:
+    def debug(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'DEBUG'.
 
@@ -191,7 +167,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.DEBUG, msg, args, **kwargs)
 
-    def info(self, msg, *args, **kwargs) -> Task:
+    def info(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'INFO'.
 
@@ -202,7 +178,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.INFO, msg, args, **kwargs)
 
-    def warning(self, msg, *args, **kwargs) -> Task:
+    def warning(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'WARNING'.
 
@@ -213,7 +189,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.WARNING, msg, args, **kwargs)
 
-    def error(self, msg, *args, **kwargs) -> Task:
+    def error(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'ERROR'.
 
@@ -224,7 +200,7 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.ERROR, msg, args, **kwargs)
 
-    def critical(self, msg, *args, **kwargs) -> Task:
+    def critical(self, msg, *args, **kwargs) -> Task:  # type: ignore
         """
         Log msg with severity 'CRITICAL'.
 
@@ -235,7 +211,9 @@ class Logger(logging.Logger):
         """
         return self._make_log_task(logging.CRITICAL, msg, args, **kwargs)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs) -> Task:
+    def exception(  # type: ignore
+        self, msg, *args, exc_info=True, **kwargs
+    ) -> Task:
         """
         Convenience method for logging an ERROR with exception information.
         """
@@ -256,9 +234,9 @@ class Logger(logging.Logger):
             if not handler:
                 continue
             try:
-                if self._initialized:
+                if handler.initialized:
                     await handler.flush()
-                    handler.close()
+                    await handler.close()
 
             except Exception:
                 """
