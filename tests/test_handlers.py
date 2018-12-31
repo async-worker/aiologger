@@ -74,6 +74,17 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         self.assertEqual(handler.writer.transport._pipe, self.write_pipe)
         self.assertTrue(handler.initialized)
 
+    async def test_init_writer_gets_the_running_event_loop(self):
+        handler = AsyncStreamHandler(
+            stream=self.write_pipe, level=10, formatter=Mock()
+        )
+
+        self.assertIsNone(handler.loop)
+
+        await handler._init_writer()
+
+        self.assertIsInstance(handler.loop, asyncio.AbstractEventLoop)
+
     async def test_emit_writes_records_into_the_stream(self):
         msg = self.record.msg
         formatter = Mock(format=Mock(return_value=msg))

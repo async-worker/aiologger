@@ -15,7 +15,6 @@ class AsyncStreamHandler(StreamHandler):
         filter: Filter = None,
     ) -> None:
         super().__init__(stream)
-        self.loop = asyncio.get_event_loop()
         self.setLevel(level)
         if formatter is None:
             formatter = Formatter()
@@ -24,6 +23,7 @@ class AsyncStreamHandler(StreamHandler):
             self.addFilter(filter)
         self.protocol_class = AiologgerProtocol
         self._initialization_lock = asyncio.Lock()
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.writer: Optional[StreamWriter] = None
 
     @property
@@ -41,6 +41,7 @@ class AsyncStreamHandler(StreamHandler):
             if self.writer is not None:
                 return self.writer
 
+            self.loop = asyncio.get_event_loop()
             transport, protocol = await self.loop.connect_write_pipe(
                 protocol_factory=self.protocol_class, pipe=self.stream
             )
