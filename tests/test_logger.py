@@ -344,14 +344,16 @@ class LoggerTests(asynctest.TestCase):
         self
     ):
         logger = Logger.with_default_handlers()
+        self.assertIsNone(logger._dummy_task)
+
         with patch.object(
             logger, "isEnabledFor", return_value=False
         ) as isEnabledFor, patch.object(
-            logger, "_Logger__dummy_task"
-        ) as __dummy_task:
+            logger, "_dummy_task"
+        ) as _dummy_task:
             log_task = logger.info("im disabled")
             isEnabledFor.assert_called_once_with(logging.INFO)
-            self.assertEqual(log_task, __dummy_task)
+            self.assertEqual(log_task, _dummy_task)
 
     async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
         logger = Logger.with_default_handlers()
@@ -365,3 +367,11 @@ class LoggerTests(asynctest.TestCase):
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_only_keeps_a_reference_to_the_loop_after_the_first_log_call(self):
+        logger = Logger.with_default_handlers()
+        self.assertIsNone(logger._loop)
+
+        await logger.info("Xablau")
+        self.assertIsInstance(logger._loop, asyncio.AbstractEventLoop)
+

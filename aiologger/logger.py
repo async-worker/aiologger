@@ -17,13 +17,17 @@ class Logger(logging.Logger):
         self, *, name="aiologger", level=logging.NOTSET, loop=None
     ) -> None:
         super(Logger, self).__init__(name, level)
-        self.loop: AbstractEventLoop = loop or asyncio.get_event_loop()
+        self._loop: Optional[AbstractEventLoop] = loop
         self._was_shutdown = False
 
-        async def _dummy(*args, **kwargs):
-            return
+        self._dummy_task: Optional[Task] = None
 
-        self.__dummy_task = self.loop.create_task(_dummy())
+    @property
+    def loop(self) -> AbstractEventLoop:
+        if self._loop is not None:
+            return self._loop
+        self._loop = asyncio.get_event_loop()
+        return self._loop
 
     @classmethod
     def with_default_handlers(
@@ -127,13 +131,21 @@ class Logger(logging.Logger):
         )
         await self.handle(record)
 
+    def __make_dummy_task(self) -> Task:
+        async def _dummy(*args, **kwargs):
+            return
+
+        return self.loop.create_task(_dummy())
+
     def _make_log_task(self, level, msg, *args, **kwargs) -> Task:
         """
         Creates an asyncio.Task for a msg if logging is enabled for level.
         Returns a dummy task otherwise.
         """
         if not self.isEnabledFor(level):
-            return self.__dummy_task
+            if self._dummy_task is None:
+                self._dummy_task = self.__make_dummy_task()
+            return self._dummy_task
 
         if kwargs.get("exc_info", False):
             if not isinstance(kwargs["exc_info"], BaseException):
