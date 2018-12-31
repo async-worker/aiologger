@@ -45,7 +45,7 @@ class AsyncStreamHandler(StreamHandler):
                 protocol_factory=self.protocol_class, pipe=self.stream
             )
 
-            self.writer = StreamWriter(  # type: ignore # bla
+            self.writer = StreamWriter(  # type: ignore # https://github.com/python/typeshed/pull/2719
                 transport=transport,
                 protocol=protocol,
                 reader=None,
