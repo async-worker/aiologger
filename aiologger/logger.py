@@ -24,7 +24,7 @@ class Logger(logging.Logger):
 
     @property
     def loop(self) -> AbstractEventLoop:
-        if self._loop is not None:
+        if self._loop is not None and self._loop.is_running():
             return self._loop
         self._loop = asyncio.get_event_loop()
         return self._loop

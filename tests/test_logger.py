@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import logging
+import unittest
 import os
 from logging import LogRecord
 from typing import Tuple
@@ -11,6 +12,18 @@ from asynctest import CoroutineMock, Mock, patch, call
 from aiologger.filters import StdoutFilter
 from aiologger.handlers import AsyncStreamHandler
 from aiologger.logger import Logger
+
+
+class LoggerOutsideEventLoopTest(unittest.TestCase):
+    def test_property_loop_always_return_a_running_loop(self):
+        logger = Logger(name="mylogger")
+        self.assertIsNotNone(logger.loop)
+        self.assertFalse(logger.loop.is_closed())
+        logger.loop.close()
+
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        self.assertIsNotNone(logger.loop)
+        self.assertFalse(logger.loop.is_closed())
 
 
 class LoggerTests(asynctest.TestCase):
