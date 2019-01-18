@@ -3,17 +3,20 @@ import os
 from logging import Handler, LogRecord
 
 import aiofiles
+from aiofiles.threadpool import AsyncTextIOWrapper
 
 from aiologger.handlers.streams import AsyncStreamHandler
 
 
 class AsyncFileHandler(AsyncStreamHandler):
-    def __init__(self, filename: str, mode: str = "a", encoding: str = None):
+    def __init__(
+        self, filename: str, mode: str = "a", encoding: str = None
+    ) -> None:
         filename = os.fspath(filename)
         self.absolute_file_path = os.path.abspath(filename)
         self.mode = mode
         self.encoding = encoding
-        self.stream = None
+        self.stream: AsyncTextIOWrapper = None
         self._intialization_lock = asyncio.Lock()
         Handler.__init__(self)
 
@@ -37,7 +40,7 @@ class AsyncFileHandler(AsyncStreamHandler):
             await self.stream.flush()
         await self.stream.close()
 
-    async def emit(self, record: LogRecord):
+    async def emit(self, record: LogRecord):  # type: ignore
         if not self.initialized:
             await self._init_writer()
 
