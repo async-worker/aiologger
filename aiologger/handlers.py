@@ -125,9 +125,13 @@ class AsyncFileHandler(AsyncStreamHandler):
         self._intialization_lock = asyncio.Lock()
         Handler.__init__(self)
 
-    async def _init_stream(self):
+    @property
+    def initialized(self):
+        return self.stream is not None
+
+    async def _init_writer(self):
         async with self._intialization_lock:
-            if self.stream is None:
+            if not self.initialized:
                 self.stream = await aiofiles.open(
                     file=self.absolute_file_path,
                     mode=self.mode,
@@ -142,11 +146,12 @@ class AsyncFileHandler(AsyncStreamHandler):
         await self.stream.close()
 
     async def emit(self, record: LogRecord):
-        if self.stream is None:
-            await self._init_stream()
+        if not self.initialized:
+            await self._init_writer()
 
         try:
             msg = self.format(record) + self.terminator
             await self.stream.write(msg)
+            await self.stream.flush()
         except Exception as e:
             await self.handleError(record)
