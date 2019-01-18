@@ -1,9 +1,9 @@
 import asyncio
 import os
+from logging import StreamHandler, Filter, Formatter, LogRecord, NOTSET, Handler
 from asyncio import StreamWriter
-from io import TextIOBase
-from logging import StreamHandler, Filter, Formatter, LogRecord, Handler
-from typing import Union, Type
+from typing import Optional
+from typing import Union
 
 import aiofiles
 
@@ -13,50 +13,52 @@ from aiologger.protocols import AiologgerProtocol
 class AsyncStreamHandler(StreamHandler):
     def __init__(
         self,
-        stream: StreamWriter,
-        level: Union[int, str],
-        formatter: Formatter,
+        stream=None,
+        level: Union[int, str] = NOTSET,
+        formatter: Formatter = None,
         filter: Filter = None,
-    ):
+    ) -> None:
         super().__init__(stream)
         self.setLevel(level)
-        self.setFormatter(formatter)
-
+        if formatter is None:
+            formatter = Formatter()
+        self.formatter = formatter
         if filter:
             self.addFilter(filter)
+        self.protocol_class = AiologgerProtocol
+        self._initialization_lock = asyncio.Lock()
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self.writer: Optional[StreamWriter] = None
 
-    @classmethod
-    async def init_from_pipe(
-        cls,
-        *,
-        pipe: TextIOBase,
-        level: Union[int, str],
-        formatter: Formatter,
-        filter: Filter = None,
-        protocol_factory: Type[asyncio.Protocol] = None,
-        loop=None,
-    ) -> "AsyncStreamHandler":
-        if loop is None:
-            loop = asyncio.get_event_loop()
+    @property
+    def initialized(self):
+        return self.writer is not None
 
-        if protocol_factory is None:
-            protocol_factory = AiologgerProtocol
+    def createLock(self) -> None:
+        """
+        Does nothing. There's aiologger does not intend to be threadsafe
+        """
+        self.lock = None
 
-        transport, protocol = await loop.connect_write_pipe(
-            protocol_factory, pipe
-        )
-        stream_writer = StreamWriter(
-            transport=transport, protocol=protocol, reader=None, loop=loop
-        )
+    async def _init_writer(self) -> StreamWriter:
+        async with self._initialization_lock:
+            if self.writer is not None:
+                return self.writer
 
-        return AsyncStreamHandler(
-            level=level,
-            stream=stream_writer,
-            formatter=formatter,
-            filter=filter,
-        )
+            self.loop = asyncio.get_event_loop()
+            transport, protocol = await self.loop.connect_write_pipe(
+                protocol_factory=self.protocol_class, pipe=self.stream
+            )
 
-    async def handleError(self, record: LogRecord):
+            self.writer = StreamWriter(  # type: ignore # https://github.com/python/typeshed/pull/2719
+                transport=transport,
+                protocol=protocol,
+                reader=None,
+                loop=self.loop,
+            )
+            return self.writer
+
+    async def handleError(self, record: LogRecord):  # type: ignore
         """
         Handle errors which occur during an emit() call.
 
@@ -70,7 +72,7 @@ class AsyncStreamHandler(StreamHandler):
         """
         pass  # pragma: no cover
 
-    async def handle(self, record: LogRecord) -> bool:
+    async def handle(self, record: LogRecord) -> bool:  # type: ignore
         """
         Conditionally emit the specified logging record.
         Emission depends on filters which may have been added to the handler.
@@ -81,17 +83,20 @@ class AsyncStreamHandler(StreamHandler):
         return rv
 
     async def flush(self):
-        await self.stream.drain()
+        await self.writer.drain()
 
-    async def emit(self, record: LogRecord):
+    async def emit(self, record: LogRecord):  # type: ignore
         """
         Actually log the specified logging record to the stream.
         """
+        if self.writer is None:
+            self.writer = await self._init_writer()
+
         try:
             msg = self.format(record) + self.terminator
 
-            await self.stream.write(msg.encode())
-            await self.stream.drain()
+            self.writer.write(msg.encode())
+            await self.writer.drain()
         except Exception:
             await self.handleError(record)
 
@@ -104,8 +109,10 @@ class AsyncStreamHandler(StreamHandler):
         should ensure that this gets called from overridden close()
         methods.
         """
+        if self.writer is None:
+            return
         await self.flush()
-        self.stream.close()
+        self.writer.close()
 
 
 class AsyncFileHandler(AsyncStreamHandler):

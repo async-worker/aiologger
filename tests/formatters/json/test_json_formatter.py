@@ -1,9 +1,7 @@
-import sys
 import unittest
 from datetime import datetime
 from logging import LogRecord
 
-from distutils.version import LooseVersion
 from aiologger.formatters.json import JsonFormatter
 
 
@@ -64,12 +62,13 @@ class DefaultHandlerTests(unittest.TestCase):
         self.assertEqual(result, "2006-06-06T06:06:06.666666")
 
     def test_it_converts_exceptions_to_strings(self):
-        obj = KeyError("Xablau")
+        class MyException(Exception):
+            def __repr__(self):
+                return "I'm an error"
+
+        obj = MyException("Xablau")
         result = self.formatter._default_handler(obj)
-        if sys.version < LooseVersion("3.7"):
-            self.assertEqual(result, "Exception: KeyError('Xablau',)")
-        else:
-            self.assertEqual(result, "Exception: KeyError('Xablau')")
+        self.assertEqual(result, "Exception: I'm an error")
 
     def test_it_calls_callable_objects_and_returns_its_return_value(self):
         obj = lambda: "Xablau"

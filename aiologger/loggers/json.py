@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 from datetime import timezone
 from asyncio import AbstractEventLoop
 from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Awaitable
@@ -37,28 +36,12 @@ class JsonLogger(Logger):
         self,
         name: str = "aiologger-json",
         level: int = logging.DEBUG,
-        serializer: Callable[..., str] = json.dumps,
         flatten: bool = False,
         serializer_kwargs: Dict = None,
         extra: Dict = None,
-        exclude_fields: Iterable[str] = None,
         loop: AbstractEventLoop = None,
-        tz: timezone = None,
-        formatter: Optional[logging.Formatter] = None,
-        handler_factory: Optional[
-            Callable[[], Awaitable[Iterable[logging.Handler]]]
-        ] = None,
-    ):
-        formatter = formatter or ExtendedJsonFormatter(
-            serializer=serializer, exclude_fields=exclude_fields, tz=tz
-        )
-        super().__init__(
-            name=name,
-            level=level,
-            loop=loop,
-            formatter=formatter,
-            handler_factory=handler_factory,
-        )
+    ) -> None:
+        super().__init__(name=name, level=level, loop=loop)
 
         self.flatten = flatten
 
@@ -71,7 +54,7 @@ class JsonLogger(Logger):
         self.extra = extra
 
     @classmethod
-    def with_default_handlers(
+    def with_default_handlers(  # type: ignore
         cls,
         *,
         name: str = "aiologger-json",
@@ -83,20 +66,23 @@ class JsonLogger(Logger):
         exclude_fields: Iterable[str] = None,
         loop: AbstractEventLoop = None,
         tz: timezone = None,
+        formatter: Optional[logging.Formatter] = None,
     ):
+        if formatter is None:
+            formatter = ExtendedJsonFormatter(
+                serializer=serializer, exclude_fields=exclude_fields, tz=tz
+            )
         return super(JsonLogger, cls).with_default_handlers(
-            name="aiologger-json",
+            name=name,
             level=level,
             loop=loop,
-            serializer=serializer,
             flatten=flatten,
             serializer_kwargs=serializer_kwargs,
             extra=extra,
-            exclude_fields=exclude_fields,
-            tz=tz,
+            formatter=formatter,
         )
 
-    async def _log(
+    async def _log(  # type: ignore
         self,
         level: int,
         msg: Any,

@@ -1,15 +1,29 @@
 import asyncio
 import inspect
 import logging
+import unittest
 import os
 from logging import LogRecord
 from typing import Tuple
-from unittest.mock import Mock, patch
 
 import asynctest
-from asynctest import CoroutineMock
+from asynctest import CoroutineMock, Mock, patch, call
 
+from aiologger.filters import StdoutFilter
+from aiologger.handlers import AsyncStreamHandler
 from aiologger.logger import Logger
+
+
+class LoggerOutsideEventLoopTest(unittest.TestCase):
+    def test_property_loop_always_return_a_running_loop(self):
+        logger = Logger(name="mylogger")
+        self.assertIsNotNone(logger.loop)
+        self.assertFalse(logger.loop.is_closed())
+        logger.loop.close()
+
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        self.assertIsNotNone(logger.loop)
+        self.assertFalse(logger.loop.is_closed())
 
 
 class LoggerTests(asynctest.TestCase):
@@ -47,16 +61,14 @@ class LoggerTests(asynctest.TestCase):
     ):
         handlers = [Mock(), Mock()]
         with asynctest.patch(
-            "aiologger.logger.AsyncStreamHandler.init_from_pipe",
-            CoroutineMock(side_effect=handlers),
-        ) as init_from_pipe:
+            "aiologger.logger.AsyncStreamHandler", side_effect=handlers
+        ) as handler_init:
             logger = Logger.with_default_handlers(loop=self.loop)
-            await logger._initialize()
             self.assertCountEqual(logger.handlers, handlers)
 
             self.assertCountEqual(
                 [logging.DEBUG, logging.WARNING],
-                [call[1]["level"] for call in init_from_pipe.await_args_list],
+                [call[1]["level"] for call in handler_init.call_args_list],
             )
 
     async def test_init_with_default_handlers_initializes_handlers_with_proper_log_levels(
@@ -64,11 +76,9 @@ class LoggerTests(asynctest.TestCase):
     ):
         handlers = [Mock(), Mock()]
         with asynctest.patch(
-            "aiologger.logger.AsyncStreamHandler.init_from_pipe",
-            CoroutineMock(side_effect=handlers),
+            "aiologger.logger.AsyncStreamHandler", side_effect=handlers
         ) as init_from_pipe:
             logger = Logger.with_default_handlers()
-            await logger._initialize()
             self.assertCountEqual(logger.handlers, handlers)
 
     async def test_callhandlers_calls_handlers_for_loglevel(self):
@@ -76,7 +86,6 @@ class LoggerTests(asynctest.TestCase):
         level30_handler = Mock(level=30, handle=CoroutineMock())
 
         logger = Logger.with_default_handlers()
-        await logger._initialize()
         logger.handlers = [level10_handler, level30_handler]
 
         record = LogRecord(
@@ -95,7 +104,6 @@ class LoggerTests(asynctest.TestCase):
 
     async def test_it_raises_an_error_if_no_handlers_are_found_for_record(self):
         logger = Logger.with_default_handlers()
-        await logger._initialize()
         logger.handlers = []
 
         record = LogRecord(
@@ -117,7 +125,6 @@ class LoggerTests(asynctest.TestCase):
         level20_handler = Mock(level=20, handle=CoroutineMock())
 
         logger = Logger.with_default_handlers()
-        await logger._initialize()
         logger.handlers = [level10_handler, level20_handler]
 
         record = LogRecord(
@@ -252,24 +259,32 @@ class LoggerTests(asynctest.TestCase):
         current_func_name = inspect.currentframe().f_code.co_name
 
         self.assertIn(current_func_name.encode(), logged_content)
-        self.assertIn(b"raise Exception('Xablau')", logged_content)
+        self.assertIn(b'raise Exception("Xablau")', logged_content)
 
     async def test_shutdown_doest_not_closes_handlers_if_not_initialized(self):
-        handler_factory = CoroutineMock(
-            return_value=[
-                Mock(flush=CoroutineMock()),
-                Mock(flush=CoroutineMock()),
-            ]
+        initialized_handler = Mock(spec=AsyncStreamHandler)
+        not_initialized_handler = Mock(
+            spec=AsyncStreamHandler, initialized=False
         )
-        logger = Logger(handler_factory=handler_factory)
+
+        logger = Logger()
+        logger.handlers = [initialized_handler, not_initialized_handler]
+
         await logger.shutdown()
-        handler_factory.assert_not_awaited()
-        self.assertCountEqual([], logger.handlers)
+
+        initialized_handler.flush.assert_awaited_once()
+        initialized_handler.close.assert_awaited_once()
+
+        not_initialized_handler.flush.assert_not_awaited()
+        not_initialized_handler.close.assert_not_awaited()
 
     async def test_shutdown_closes_all_handlers_if_initialized(self):
-        handlers = [Mock(flush=CoroutineMock()), Mock(flush=CoroutineMock())]
-        logger = Logger(handler_factory=CoroutineMock(return_value=handlers))
-        await logger._initialize()
+        handlers = [
+            Mock(spec=AsyncStreamHandler),
+            Mock(spec=AsyncStreamHandler),
+        ]
+        logger = Logger()
+        logger.handlers = handlers
 
         await logger.shutdown()
 
@@ -277,12 +292,12 @@ class LoggerTests(asynctest.TestCase):
 
         for handler in logger.handlers:
             handler.flush.assert_awaited_once()
-            handler.close.assert_called_once()
+            handler.close.assert_awaited_once()
 
     async def test_shutdown_doest_not_closes_handlers_twice(self):
         handlers = [Mock(flush=CoroutineMock()), Mock(flush=CoroutineMock())]
-        logger = Logger(handler_factory=CoroutineMock(return_value=handlers))
-        await logger._initialize()
+        logger = Logger()
+        logger.handlers = handlers
 
         await asyncio.gather(
             logger.shutdown(), logger.shutdown(), logger.shutdown()
@@ -296,7 +311,6 @@ class LoggerTests(asynctest.TestCase):
 
     async def test_shutdown_ignores_erros(self):
         logger = Logger()
-        await logger._initialize()
         logger.handlers = [
             Mock(flush=CoroutineMock(side_effect=ValueError)),
             Mock(flush=CoroutineMock()),
@@ -308,53 +322,49 @@ class LoggerTests(asynctest.TestCase):
         logger.handlers[1].close.assert_called_once()
 
     async def test_logger_handlers_are_not_initialized_twice(self):
-        condition = asyncio.Condition()
-        initialize_meta = {"count": 0}
+        handler = Mock(spec=AsyncStreamHandler, level=logging.DEBUG)
+        with patch(
+            "aiologger.logger.AsyncStreamHandler", return_value=handler
+        ) as Handler:
+            formatter = Mock()
+            logger = Logger.with_default_handlers(formatter=formatter)
+            await asyncio.gather(
+                logger.info("sardinha"),
+                logger.info("tilápia"),
+                logger.info("xerelete"),
+                logger.error("fraldinha"),
+            )
 
-        async def create_handlers():
-            async with condition:
-                await condition.wait_for(
-                    predicate=lambda: initialize_meta["count"] == 4
-                )
+            Handler.allert_has_calls(
+                [
+                    call(
+                        stream=self.write_pipe,
+                        level=logging.DEBUG,
+                        formatter=formatter,
+                        filter=StdoutFilter(),
+                    ),
+                    call(
+                        stream=self.write_pipe,
+                        level=logging.WARNING,
+                        formatter=formatter,
+                    ),
+                ]
+            )
 
-            return await Logger._create_default_handlers()
-
-        handlers_factory = CoroutineMock(side_effect=create_handlers)
-
-        logger = Logger(handler_factory=handlers_factory)
-
-        original_initialize = logger._initialize
-
-        async def initialize():
-            async with condition:
-                initialize_meta["count"] += 1
-                condition.notify_all()
-            await original_initialize()
-
-        patch.object(logger, "_initialize", initialize).start()
-
-        await asyncio.gather(
-            logger.info("sardinha"),
-            logger.info("tilápia"),
-            logger.info("xerelete"),
-            logger.error("fraldinha"),
-        )
-
-        handlers_factory.assert_called_once()
-        await logger.shutdown()
+            await logger.shutdown()
 
     async def test_it_returns_a_dummy_task_if_logging_isnt_enabled_for_level(
         self
     ):
         logger = Logger.with_default_handlers()
+        self.assertIsNone(logger._dummy_task)
+
         with patch.object(
             logger, "isEnabledFor", return_value=False
-        ) as isEnabledFor, patch.object(
-            logger, "_Logger__dummy_task"
-        ) as __dummy_task:
+        ) as isEnabledFor, patch.object(logger, "_dummy_task") as _dummy_task:
             log_task = logger.info("im disabled")
             isEnabledFor.assert_called_once_with(logging.INFO)
-            self.assertEqual(log_task, __dummy_task)
+            self.assertEqual(log_task, _dummy_task)
 
     async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
         logger = Logger.with_default_handlers()
@@ -368,3 +378,12 @@ class LoggerTests(asynctest.TestCase):
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_only_keeps_a_reference_to_the_loop_after_the_first_log_call(
+        self
+    ):
+        logger = Logger.with_default_handlers()
+        self.assertIsNone(logger._loop)
+
+        await logger.info("Xablau")
+        self.assertIsInstance(logger._loop, asyncio.AbstractEventLoop)

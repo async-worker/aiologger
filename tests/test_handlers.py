@@ -46,54 +46,76 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         self.assertEqual(handler.stream, stream)
         self.assertIn(filter, handler.filters)
 
-    async def test_init_from_pipe_makes_pipe_nonblocking(self):
+    async def test_init_writer_makes_pipe_nonblocking(self):
         flags = fcntl.fcntl(self.write_pipe.fileno(), fcntl.F_GETFL)
         self.assertEqual(flags, 1)
-
-        await AsyncStreamHandler.init_from_pipe(
-            pipe=self.write_pipe, level=10, formatter=Mock()
+        handler = AsyncStreamHandler(
+            stream=self.write_pipe, level=10, formatter=Mock()
         )
+        await handler._init_writer()
+
         flags = fcntl.fcntl(self.write_pipe.fileno(), fcntl.F_GETFL)
         self.assertEqual(flags, 1 | os.O_NONBLOCK)
 
-    async def test_init_from_pipe_initializes_a_nonblocking_pipe_streamwriter(
+    async def test_init_writer_initializes_a_nonblocking_pipe_streamwriter(
         self
     ):
-        handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=self.write_pipe, level=10, formatter=Mock()
+
+        handler = AsyncStreamHandler(
+            stream=self.write_pipe, level=10, formatter=Mock()
         )
 
-        self.assertIsInstance(handler.stream, asyncio.StreamWriter)
-        self.assertIsInstance(handler.stream._protocol, AiologgerProtocol)
-        self.assertEqual(handler.stream.transport._pipe, self.write_pipe)
+        self.assertFalse(handler.initialized)
+
+        await handler._init_writer()
+
+        self.assertIsInstance(handler.writer, asyncio.StreamWriter)
+        self.assertIsInstance(handler.writer._protocol, AiologgerProtocol)
+        self.assertEqual(handler.writer.transport._pipe, self.write_pipe)
+        self.assertTrue(handler.initialized)
+
+    async def test_init_writer_gets_the_running_event_loop(self):
+        handler = AsyncStreamHandler(
+            stream=self.write_pipe, level=10, formatter=Mock()
+        )
+
+        self.assertIsNone(handler.loop)
+
+        await handler._init_writer()
+
+        self.assertIsInstance(handler.loop, asyncio.AbstractEventLoop)
 
     async def test_emit_writes_records_into_the_stream(self):
         msg = self.record.msg
         formatter = Mock(format=Mock(return_value=msg))
-        stream = Mock(write=CoroutineMock(), drain=CoroutineMock())
+        writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
 
-        handler = AsyncStreamHandler(
-            level=666, stream=stream, formatter=formatter
-        )
+        with patch("aiologger.handlers.StreamWriter", return_value=writer):
+            handler = AsyncStreamHandler(
+                level=666, stream=self.write_pipe, formatter=formatter
+            )
 
-        await handler.emit(self.record)
-
-        stream.write.assert_awaited_once_with(
-            (msg + handler.terminator).encode()
-        )
-        stream.drain.assert_awaited_once()
-
-    async def test_emit_calls_handleError_if_an_erro_occurs(self):
-        stream = Mock(write=CoroutineMock(), drain=CoroutineMock())
-        handler = AsyncStreamHandler(
-            level=666, stream=stream, formatter=Mock(side_effect=Exception)
-        )
-        with asynctest.patch.object(handler, "handleError") as handleError:
             await handler.emit(self.record)
 
-            handleError.assert_awaited_once_with(self.record)
-            stream.write.assert_not_awaited()
-            stream.drain.assert_not_awaited()
+            writer.write.assert_called_once_with(
+                (msg + handler.terminator).encode()
+            )
+            writer.drain.assert_awaited_once()
+
+    async def test_emit_calls_handleError_if_an_erro_occurs(self):
+        writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
+        with patch("aiologger.handlers.StreamWriter", return_value=writer):
+            handler = AsyncStreamHandler(
+                level=666,
+                stream=self.write_pipe,
+                formatter=Mock(side_effect=Exception),
+            )
+            with asynctest.patch.object(handler, "handleError") as handleError:
+                await handler.emit(self.record)
+
+                handleError.assert_awaited_once_with(self.record)
+                writer.write.assert_not_awaited()
+                writer.drain.assert_not_awaited()
 
     async def test_handle_calls_emit_if_a_record_is_loggable(self):
         handler = AsyncStreamHandler(
@@ -118,9 +140,14 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             emit.assert_not_awaited()
 
     async def test_close_closes_the_underlying_transport(self):
-        handler = await AsyncStreamHandler.init_from_pipe(
-            pipe=self.write_pipe, level=10, formatter=Mock()
-        )
-        self.assertFalse(handler.stream.transport.is_closing())
-        handler.close()
-        self.assertTrue(handler.stream.transport.is_closing())
+        handler = AsyncStreamHandler(stream=self.write_pipe, level=10)
+        await handler._init_writer()
+        self.assertFalse(handler.writer.transport.is_closing())
+        await handler.close()
+        self.assertTrue(handler.writer.transport.is_closing())
+
+    async def test_initialized_returns_true_if_writer_is_initialized(self):
+        handler = AsyncStreamHandler(stream=self.write_pipe, level=10)
+        self.assertFalse(handler.initialized)
+        await handler._init_writer()
+        self.assertTrue(handler.initialized)
