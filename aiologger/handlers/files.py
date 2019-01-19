@@ -401,11 +401,11 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         result = []
         prefix = base_name + "."
         plen = len(prefix)
-        for fileName in file_names:
-            if fileName[:plen] == prefix:
-                suffix = fileName[plen:]
+        for file_name in file_names:
+            if file_name[:plen] == prefix:
+                suffix = file_name[plen:]
                 if self.ext_match.match(suffix):
-                    result.append(os.path.join(dir_name, fileName))
+                    result.append(os.path.join(dir_name, file_name))
         if len(result) < self.backup_count:
             result = []
         else:
