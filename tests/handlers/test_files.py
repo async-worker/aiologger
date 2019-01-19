@@ -1,13 +1,26 @@
 import asyncio
+import datetime
+import logging
+import os
+import sys
+import time
 from logging import LogRecord
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
 
 import asynctest
 from aiofiles.threadpool import AsyncTextIOWrapper
-from asynctest import CoroutineMock
+from asynctest import CoroutineMock, Mock
+from freezegun import freeze_time
 
-from aiologger.handlers.files import AsyncFileHandler
+from aiologger.handlers.files import (
+    AsyncFileHandler,
+    BaseAsyncRotatingFileHandler,
+    AsyncTimedRotatingFileHandler,
+    RotationInverval,
+    ONE_WEEK_IN_SECONDS,
+    ONE_DAY_IN_SECONDS,
+)
 from aiologger.handlers.streams import AsyncStreamHandler
 
 
@@ -82,3 +95,30 @@ class AsyncFileHandlerTests(asynctest.TestCase):
                 *(handler.emit(self.record) for _ in range(42))
             )
             open.assert_awaited_once()
+
+
+class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
+    async def test_rotate_renames_the_source_file_if_a_rotator_isnt_available(
+        self
+    ):
+        temp_file = NamedTemporaryFile()
+        handler = BaseAsyncRotatingFileHandler(filename=temp_file.name)
+        destination = temp_file.name + "1"
+
+        self.assertTrue(os.path.exists(temp_file.name))
+        self.assertFalse(os.path.exists(destination))
+
+        handler.rotate(temp_file.name, destination)
+
+        self.assertFalse(os.path.exists(temp_file.name))
+        self.assertTrue(os.path.exists(destination))
+
+    async def test_rotate_calls_the_rotator_if_one_is_avaialble(self):
+        temp_file = NamedTemporaryFile()
+        handler = BaseAsyncRotatingFileHandler(filename=temp_file.name)
+        handler.rotator = Mock()
+        destination = temp_file.name + "1"
+
+        handler.rotate(temp_file.name, destination)
+
+        handler.rotator.assert_called_once_with(temp_file.name, destination)
