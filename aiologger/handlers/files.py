@@ -404,8 +404,6 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
     async def get_files_to_delete(self) -> List[str]:
         """
         Determine the files to delete when rolling over.
-
-        More specific than the earlier method, which just used glob.glob().
         """
         dir_name, base_name = os.path.split(self.absolute_file_path)
         file_names = await self.loop.run_in_executor(
@@ -420,11 +418,9 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
                 if self.ext_match.match(suffix):
                     result.append(os.path.join(dir_name, file_name))
         if len(result) < self.backup_count:
-            result = []
+            return []
         else:
-            result.sort()
-            result = result[: len(result) - self.backup_count]
-        return result
+            return result[: len(result) - self.backup_count]
 
     async def do_rollover(self):
         """
