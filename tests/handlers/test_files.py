@@ -98,30 +98,71 @@ class AsyncFileHandlerTests(asynctest.TestCase):
 
 
 class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
+    async def setUp(self):
+        self.temp_file = NamedTemporaryFile()
+
+    async def tearDown(self):
+        self.temp_file.close()
+        if os.path.exists(self.temp_file.name):
+            os.unlink(self.temp_file.name)
+
     async def test_rotate_renames_the_source_file_if_a_rotator_isnt_available(
         self
     ):
-        temp_file = NamedTemporaryFile()
-        handler = BaseAsyncRotatingFileHandler(filename=temp_file.name)
-        destination = temp_file.name + "1"
+        handler = BaseAsyncRotatingFileHandler(filename=self.temp_file.name)
+        destination = self.temp_file.name + "1"
 
-        self.assertTrue(os.path.exists(temp_file.name))
+        self.assertTrue(os.path.exists(self.temp_file.name))
         self.assertFalse(os.path.exists(destination))
 
-        handler.rotate(temp_file.name, destination)
+        handler.rotate(self.temp_file.name, destination)
 
-        self.assertFalse(os.path.exists(temp_file.name))
+        self.assertFalse(os.path.exists(self.temp_file.name))
         self.assertTrue(os.path.exists(destination))
 
     async def test_rotate_calls_the_rotator_if_one_is_avaialble(self):
-        temp_file = NamedTemporaryFile()
-        handler = BaseAsyncRotatingFileHandler(filename=temp_file.name)
+        handler = BaseAsyncRotatingFileHandler(filename=self.temp_file.name)
         handler.rotator = Mock()
-        destination = temp_file.name + "1"
+        destination = self.temp_file.name + "1"
 
-        handler.rotate(temp_file.name, destination)
+        handler.rotate(self.temp_file.name, destination)
 
-        handler.rotator.assert_called_once_with(temp_file.name, destination)
+        handler.rotator.assert_called_once_with(
+            self.temp_file.name, destination
+        )
+
+    async def test_emit_does_rollover_if_should_rollover(self):
+        handler = BaseAsyncRotatingFileHandler(filename=self.temp_file.name)
+        handler.should_rollover = Mock(return_value=True)
+
+        async def rollover_is_done():
+            """
+            sleep is needed so that the loop can schedule the other
+            `do_rollover` coroutines, simulating a real `do_rollover` behaviour
+            """
+            await asyncio.sleep(0.1)
+            handler.should_rollover.return_value = False
+
+        handler.do_rollover = CoroutineMock(side_effect=rollover_is_done)
+
+        await asyncio.gather(
+            *(
+                handler.emit(
+                    LogRecord(
+                        name=str(i),
+                        level=20,
+                        pathname="/aiologger/tests/test_logger.py",
+                        lineno=17,
+                        msg="Xablau!",
+                        exc_info=None,
+                        args=None,
+                    )
+                )
+                for i in range(42)
+            )
+        )
+
+        handler.do_rollover.assert_awaited_once()
 
 
 class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
