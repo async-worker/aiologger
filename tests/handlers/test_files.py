@@ -11,7 +11,6 @@ from unittest.mock import patch
 import asynctest
 from aiofiles.threadpool import AsyncTextIOWrapper
 from asynctest import CoroutineMock, Mock
-from freezegun import freeze_time
 
 from aiologger.handlers.files import (
     AsyncFileHandler,
@@ -114,7 +113,7 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
         self.assertTrue(os.path.exists(self.temp_file.name))
         self.assertFalse(os.path.exists(destination))
 
-        handler.rotate(self.temp_file.name, destination)
+        await handler.rotate(self.temp_file.name, destination)
 
         self.assertFalse(os.path.exists(self.temp_file.name))
         self.assertTrue(os.path.exists(destination))
@@ -124,7 +123,7 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
         handler.rotator = Mock()
         destination = self.temp_file.name + "1"
 
-        handler.rotate(self.temp_file.name, destination)
+        await handler.rotate(self.temp_file.name, destination)
 
         handler.rotator.assert_called_once_with(
             self.temp_file.name, destination
