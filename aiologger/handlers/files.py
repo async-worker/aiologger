@@ -81,6 +81,7 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         self.encoding = encoding
         self.namer = namer
         self.rotator = rotator
+        self._rollover_lock = asyncio.Lock()
 
     def should_rollover(self, record: LogRecord) -> bool:
         raise NotImplementedError
@@ -93,11 +94,13 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         Emit a record.
 
         Output the record to the file, catering for rollover as described
-        in doRollover().
+        in `do_rollover`.
         """
         try:
             if self.should_rollover(record):
-                await self.do_rollover()
+                async with self._rollover_lock:
+                    if self.should_rollover(record):
+                        await self.do_rollover()
             await super().emit(record)
         except Exception as e:
             await self.handleError(record)

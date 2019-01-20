@@ -102,7 +102,6 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
         self.temp_file = NamedTemporaryFile()
 
     async def tearDown(self):
-        self.temp_file.close()
         if os.path.exists(self.temp_file.name):
             os.unlink(self.temp_file.name)
 
