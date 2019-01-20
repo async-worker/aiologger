@@ -15,6 +15,7 @@ from aiologger.formatters.json import (
     FUNCTION_NAME_FIELDNAME,
     LOG_LEVEL_FIELDNAME,
 )
+from aiologger.utils import CallableWrapper
 from freezegun import freeze_time
 
 
@@ -335,7 +336,7 @@ class JsonLoggerTests(asynctest.TestCase):
     async def test_callable_values_are_called_before_serialization(self):
         a_callable = Mock(return_value="I'm a callable that returns a string!")
 
-        await self.logger.info(a_callable)
+        await self.logger.info(CallableWrapper(a_callable))
         logged_content = json.loads(await self.stream_reader.readline())
         self.assertEqual(logged_content["msg"], a_callable.return_value)
 
