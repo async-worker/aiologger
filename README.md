@@ -254,7 +254,8 @@ loop.close()
 ### JsonLogger Options
 
 `Callable[[], str]` log values may also be used to generate dynamic content that
-are evaluated at serialization time:
+are evaluated at serialization time. All you need to do is wrap the callable 
+using `CallableWrapper`:
 
 ```python
 import asyncio
@@ -262,6 +263,7 @@ import logging
 from random import randint
 
 from aiologger.loggers.json import JsonLogger
+from aiologger.utils import CallableWrapper
 
 
 def rand():
@@ -273,10 +275,10 @@ logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
 async def main():
 
-    await logger.info(rand)
+    await logger.info(CallableWrapper(rand))
     # {"logged_at": "2018-06-14T09:37:52.624123", "line_number": 15, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": 70}
 
-    await logger.info({"Xablau": rand})
+    await logger.info({"Xablau": CallableWrapper(rand)})
     # {"logged_at": "2018-06-14T09:37:52.624305", "line_number": 18, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": {"Xablau": 29}}
     
     await logger.shutdown()
