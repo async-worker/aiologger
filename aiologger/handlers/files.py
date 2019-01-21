@@ -379,12 +379,12 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
                         dst_now = t[-1]
                         dst_at_rollover = time.localtime(new_rollover_at)[-1]
                         if dst_now != dst_at_rollover:
-                            if (
-                                not dst_now
-                            ):  # DST kicks in before next rollover, so we need to deduct an hour
-                                addend = -3600
-                            else:  # DST bows out before next rollover, so we need to add an hour
-                                addend = 3600
+                            if not dst_now:
+                                # DST kicks in before next rollover, so we need to deduct an hour
+                                addend = -ONE_HOUR_IN_SECONDS
+                            else:
+                                # DST bows out before next rollover, so we need to add an hour
+                                addend = ONE_HOUR_IN_SECONDS
                             new_rollover_at += addend
                     result = new_rollover_at
         return result
@@ -422,6 +422,13 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         else:
             return result[: len(result) - self.backup_count]
 
+    async def _delete_files(self, file_paths: List[str]):
+        delete_tasks = (
+            self.loop.run_in_executor(None, lambda: os.unlink(file_path))
+            for file_path in file_paths
+        )
+        await asyncio.gather(*delete_tasks)
+
     async def do_rollover(self):
         """
         do a rollover; in this case, a date/time stamp is appended to the filename
@@ -444,28 +451,26 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
             dst_then = time_tuple[-1]
             if dst_now != dst_then:
                 if dst_now:
-                    addend = 3600
+                    addend = ONE_HOUR_IN_SECONDS
                 else:
-                    addend = -3600
+                    addend = -ONE_HOUR_IN_SECONDS
                 time_tuple = time.localtime(t + addend)
-        dfn = self.rotation_filename(
+        destination_file_path = self.rotation_filename(
             self.absolute_file_path
             + "."
             + time.strftime(self.suffix, time_tuple)
         )
-        if await self.loop.run_in_executor(None, lambda: os.path.exists(dfn)):
-            await self.loop.run_in_executor(None, lambda: os.unlink(dfn))
-        await self.rotate(self.absolute_file_path, dfn)
+        if await self.loop.run_in_executor(
+            None, lambda: os.path.exists(destination_file_path)
+        ):
+            await self.loop.run_in_executor(
+                None, lambda: os.unlink(destination_file_path)
+            )
+        await self.rotate(self.absolute_file_path, destination_file_path)
         if self.backup_count > 0:
             files_to_delete = await self.get_files_to_delete()
             if files_to_delete:
-                delete_tasks = (
-                    self.loop.run_in_executor(
-                        None, lambda: os.unlink(file_path)
-                    )
-                    for file_path in files_to_delete
-                )
-                await asyncio.gather(*delete_tasks)
+                await self._delete_files(files_to_delete)
 
         await self._init_writer()
         new_rollover_at = self.compute_rollover(current_time)
@@ -478,11 +483,11 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         ) and not self.utc:
             dst_at_rollover = time.localtime(new_rollover_at)[-1]
             if dst_now != dst_at_rollover:
-                if (
-                    not dst_now
-                ):  # DST kicks in before next rollover, so we need to deduct an hour
-                    addend = -3600
-                else:  # DST bows out before next rollover, so we need to add an hour
-                    addend = 3600
+                if not dst_now:
+                    # DST kicks in before next rollover, so we need to deduct an hour
+                    addend = -ONE_HOUR_IN_SECONDS
+                else:
+                    # DST bows out before next rollover, so we need to add an hour
+                    addend = ONE_HOUR_IN_SECONDS
                 new_rollover_at += addend
         self.rollover_at = new_rollover_at
