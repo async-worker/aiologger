@@ -43,7 +43,7 @@ class AsyncStreamHandler(StreamHandler):
 
             self.loop = asyncio.get_event_loop()
             transport, protocol = await self.loop.connect_write_pipe(
-                protocol_factory=self.protocol_class, pipe=self.stream
+                self.protocol_class, self.stream
             )
 
             self.writer = StreamWriter(  # type: ignore # https://github.com/python/typeshed/pull/2719
