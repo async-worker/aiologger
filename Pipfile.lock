@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "b26bdd9216468deb36a716ec418d96318057c35e53c29010b82e2e8d37ca2270"
+            "sha256": "04178221a30b7bdde4a5d948de1664733bad3e57bd455803bfce2bf0813a1fca"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -15,7 +15,8 @@
             }
         ]
     },
-    "default": {
+    "default": {},
+    "develop": {
         "aiofiles": {
             "hashes": [
                 "sha256:021ea0ba314a86027c166ecc4b4c07f2d40fc0f4b3a950d1868a0f2571c2bbee",
@@ -23,9 +24,7 @@
             ],
             "index": "pypi",
             "version": "==0.4.0"
-        }
-    },
-    "develop": {
+        },
         "appdirs": {
             "hashes": [
                 "sha256:9e5896d1372858f8dd3344faf4e5014d21849c756c8d5701f78f8a103b372d92",

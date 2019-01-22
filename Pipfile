@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiofiles = "==0.4.0"
 
 [dev-packages]
 pytest = "*"
@@ -15,6 +14,7 @@ freezegun = "==0.3.10"
 mypy = "==0.630"
 black = "==18.9b0"
 ipdb = "==0.11"
+aiofiles = "==0.4.0"
 
 [requires]
 python_version = "3.6"
