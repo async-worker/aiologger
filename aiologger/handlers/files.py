@@ -1,3 +1,7 @@
+# The following code and documentation was inspired, and in some cases
+# copied and modified, from the work of Vinay Sajip and contributors
+# on cpython's logging package
+
 import abc
 import asyncio
 import datetime
