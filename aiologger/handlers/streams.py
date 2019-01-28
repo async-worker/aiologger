@@ -1,6 +1,6 @@
 import asyncio
-from logging import StreamHandler, Filter, Formatter, LogRecord, NOTSET
 from asyncio import StreamWriter
+from logging import StreamHandler, NOTSET, Formatter, Filter, LogRecord
 from typing import Union, Optional
 
 from aiologger.protocols import AiologgerProtocol

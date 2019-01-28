@@ -5,7 +5,7 @@ from asyncio import AbstractEventLoop, Task
 from typing import Iterable, Optional, Callable, Awaitable, Tuple
 
 from aiologger.filters import StdoutFilter
-from aiologger.handlers import AsyncStreamHandler
+from aiologger.handlers.streams import AsyncStreamHandler
 
 
 _Caller = Tuple[str, int, str, Optional[str]]

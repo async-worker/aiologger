@@ -10,7 +10,7 @@ import asynctest
 from asynctest import CoroutineMock, Mock, patch, call
 
 from aiologger.filters import StdoutFilter
-from aiologger.handlers import AsyncStreamHandler
+from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.logger import Logger
 
 

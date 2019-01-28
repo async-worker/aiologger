@@ -2,12 +2,12 @@ import asyncio
 import fcntl
 import os
 from logging import LogRecord
-from unittest.mock import Mock, patch
+from unittest.mock import patch, Mock
 
 import asynctest
 from asynctest import CoroutineMock
 
-from aiologger.handlers import AsyncStreamHandler
+from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.protocols import AiologgerProtocol
 
 
@@ -90,7 +90,9 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         formatter = Mock(format=Mock(return_value=msg))
         writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
 
-        with patch("aiologger.handlers.StreamWriter", return_value=writer):
+        with patch(
+            "aiologger.handlers.streams.StreamWriter", return_value=writer
+        ):
             handler = AsyncStreamHandler(
                 level=666, stream=self.write_pipe, formatter=formatter
             )
@@ -104,7 +106,9 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
 
     async def test_emit_calls_handleError_if_an_erro_occurs(self):
         writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
-        with patch("aiologger.handlers.StreamWriter", return_value=writer):
+        with patch(
+            "aiologger.handlers.streams.StreamWriter", return_value=writer
+        ):
             handler = AsyncStreamHandler(
                 level=666,
                 stream=self.write_pipe,

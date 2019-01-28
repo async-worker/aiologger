@@ -14,6 +14,7 @@ freezegun = "==0.3.10"
 mypy = "==0.630"
 black = "==18.9b0"
 ipdb = "==0.11"
+aiofiles = "==0.4.0"
 uvloop = "==0.11.3"
 
 [requires]

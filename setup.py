@@ -6,6 +6,7 @@ setup(
     name="aiologger",
     version=VERSION,
     packages=find_packages(exclude=["*test*"]),
+    extras_require={"aiofiles": ["aiofiles==0.4.0"]},
     url="https://github.com/diogommartins/aiologger",
     author="Diogo Magalhães Martins",
     author_email="magalhaesmartins@icloud.com",
