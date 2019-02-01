@@ -6,7 +6,7 @@
 Welcome to aiologger docs!
 =====================================
 
-|PYPI| |PYPI Python Versions| |Build Status| |codecov| |black|
+|PYPI| |PYPI Python Versions| |Build Status| |codecov| |black| |downloads|
 
 .. |PYPI| image:: https://img.shields.io/pypi/v/aiologger.svg
    :target: http://pypi.python.org/pypi/aiologger
@@ -18,6 +18,9 @@ Welcome to aiologger docs!
    :target: https://codecov.io/gh/B2W-BIT/aiologger
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/ambv/black
+.. |downloads| image:: https://pepy.tech/badge/aiologger
+   :target: https://pepy.tech/project/aiologger
+
 
 The builtin python logger is IO blocking. This means that using the
 builtin ``logging`` module will interfere with your asynchronouns
@@ -44,7 +47,7 @@ Testing
 .. code-block:: bash
 
    pipenv install --dev
-   py.test
+   pipenv run test
 
 
 Dependencies
