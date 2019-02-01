@@ -5,6 +5,8 @@ from datetime import datetime
 from inspect import istraceback
 from typing import Callable, Iterable, Union
 from datetime import timezone
+from aiologger.utils import CallableWrapper
+
 
 LOGGED_AT_FIELDNAME = "logged_at"
 LINE_NUMBER_FIELDNAME = "line_number"
@@ -35,7 +37,7 @@ class JsonFormatter(logging.Formatter):
             return "Exception: %s" % repr(obj)
         elif type(obj) is type:
             return str(obj)
-        elif callable(obj):
+        elif isinstance(obj, CallableWrapper):
             return obj()
         return str(obj)
 

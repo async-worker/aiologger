@@ -3,6 +3,7 @@ from datetime import datetime
 from logging import LogRecord
 
 from aiologger.formatters.json import JsonFormatter
+from aiologger.utils import CallableWrapper
 
 
 class JsonFormatterTests(unittest.TestCase):
@@ -71,7 +72,7 @@ class DefaultHandlerTests(unittest.TestCase):
         self.assertEqual(result, "Exception: I'm an error")
 
     def test_it_calls_callable_objects_and_returns_its_return_value(self):
-        obj = lambda: "Xablau"
+        obj = CallableWrapper(lambda: "Xablau")
         result = self.formatter._default_handler(obj)
         self.assertEqual(result, "Xablau")
 

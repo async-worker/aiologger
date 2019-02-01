@@ -254,7 +254,8 @@ loop.close()
 ### JsonLogger Options
 
 `Callable[[], str]` log values may also be used to generate dynamic content that
-are evaluated at serialization time:
+are evaluated at serialization time. All you need to do is wrap the callable 
+using `CallableWrapper`:
 
 ```python
 import asyncio
@@ -262,6 +263,7 @@ import logging
 from random import randint
 
 from aiologger.loggers.json import JsonLogger
+from aiologger.utils import CallableWrapper
 
 
 def rand():
@@ -273,10 +275,10 @@ logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
 
 async def main():
 
-    await logger.info(rand)
+    await logger.info(CallableWrapper(rand))
     # {"logged_at": "2018-06-14T09:37:52.624123", "line_number": 15, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": 70}
 
-    await logger.info({"Xablau": rand})
+    await logger.info({"Xablau": CallableWrapper(rand)})
     # {"logged_at": "2018-06-14T09:37:52.624305", "line_number": 18, "function": "main", "level": "INFO", "file_path": "/Users/diogo.mmartins/Library/Preferences/PyCharm2018.1/scratches/scratch_47.py", "msg": {"Xablau": 29}}
     
     await logger.shutdown()
@@ -532,10 +534,49 @@ as a parameter.
 await logger.warning({'artist': 'Black Country Communion', 'song': 'Cold'}, serializer_kwargs={'indent': 4})
 ```
 
-## Compatibility
+# Handlers
+
+## AsyncStreamHandler
+
+A handler class for writing logs into a stream which may be `sys.stdout` 
+or `sys.stderr`. If a stream isn't provided, it defaults to `sys.stderr`. If 
+`level` is not specified, `logging.NOTSET` is used. If `formatter` is not 
+`None`, it is used to format the log record before `emit()` gets called. A 
+`filter` may be used to filter log records
+
+
+```python
+import sys
+from aiologger.handlers.streams import AsyncStreamHandler
+
+
+handler = AsyncStreamHandler(stream=sys.stdout)
+```
+It also accepts a level, formatter and filter at the initialization.
+
+## AsyncFileHandler
+
+**Important**: AsyncFileHandler depends on a optional dependency and you should
+install aiologger with `pip install aiologger[aiofiles]` 
+
+A handler class that sends logs into files. The specified file is opened 
+and used as the _stream_ for logging. If `mode` is not specified, 'a' is 
+used. If `encoding` is not `None`, it is used to open the file with that 
+encoding. The file opening is delayed until the first call to `emit()`.
+
+```python
+from aiologger.handlers.files import AsyncFileHandler
+from tempfile import NamedTemporaryFile
+
+
+temp_file = NamedTemporaryFile() 
+handler = AsyncFileHandler(filename=temp_file.name)
+```
+
+# Compatibility
 
 Currently tested only on python 3.6 and 3.7
 
-## Depencencies
+# Depencencies
 
 Has none.
