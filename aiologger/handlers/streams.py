@@ -1,5 +1,5 @@
 import asyncio
-from asyncio import StreamWriter
+from asyncio import AbstractEventLoop, StreamWriter
 from logging import StreamHandler, NOTSET, Formatter, Filter, LogRecord
 from typing import Union, Optional
 
@@ -13,6 +13,8 @@ class AsyncStreamHandler(StreamHandler):
         level: Union[int, str] = NOTSET,
         formatter: Formatter = None,
         filter: Filter = None,
+        *,
+        loop: Optional[AbstractEventLoop] = None,
     ) -> None:
         super().__init__(stream)
         self.setLevel(level)
@@ -22,8 +24,8 @@ class AsyncStreamHandler(StreamHandler):
         if filter:
             self.addFilter(filter)
         self.protocol_class = AiologgerProtocol
-        self._initialization_lock = asyncio.Lock()
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self.loop = loop or asyncio.get_event_loop()
+        self._initialization_lock = asyncio.Lock(loop=self.loop)
         self.writer: Optional[StreamWriter] = None
 
     @property
@@ -41,7 +43,6 @@ class AsyncStreamHandler(StreamHandler):
             if self.writer is not None:
                 return self.writer
 
-            self.loop = asyncio.get_event_loop()
             transport, protocol = await self.loop.connect_write_pipe(
                 self.protocol_class, self.stream
             )
