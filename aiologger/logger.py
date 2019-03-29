@@ -36,7 +36,7 @@ class Logger(logging.Logger):
         name="aiologger",
         level=logging.NOTSET,
         formatter: Optional[logging.Formatter] = None,
-        loop=None,
+        loop: Optional[AbstractEventLoop] = None,
         **kwargs,
     ):
         self = cls(name=name, level=level, loop=loop, **kwargs)  # type: ignore
@@ -46,11 +46,15 @@ class Logger(logging.Logger):
                 level=logging.DEBUG,
                 formatter=formatter,
                 filter=StdoutFilter(),
+                loop=loop,
             )
         )
         self.addHandler(
             AsyncStreamHandler(
-                stream=sys.stderr, level=logging.WARNING, formatter=formatter
+                stream=sys.stderr,
+                level=logging.WARNING,
+                formatter=formatter,
+                loop=loop,
             )
         )
 
