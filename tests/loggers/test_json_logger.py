@@ -10,7 +10,8 @@ from unittest.mock import Mock, patch
 import asynctest
 from asynctest import CoroutineMock
 
-from aiologger.loggers.json import JsonLogger, LogRecord
+from aiologger.loggers.json import JsonLogger
+from aiologger.records import ExtendedLogRecord
 from aiologger.formatters.json import (
     FUNCTION_NAME_FIELDNAME,
     LOG_LEVEL_FIELDNAME,
@@ -157,7 +158,7 @@ class JsonLoggerTests(asynctest.TestCase):
                     level=10, msg="Xablau", args=None, exc_info=e
                 )
                 call = handle.await_args_list.pop()
-                record: LogRecord = call[0][0]
+                record: ExtendedLogRecord = call[0][0]
                 exc_class, exc, exc_traceback = record.exc_info
                 self.assertEqual(exc_class, ValueError)
                 self.assertEqual(exc, e)

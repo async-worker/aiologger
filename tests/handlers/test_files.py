@@ -3,7 +3,6 @@ import datetime
 import logging
 import os
 import time
-from logging import LogRecord
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
 
@@ -23,6 +22,7 @@ from aiologger.handlers.files import (
     ONE_HOUR_IN_SECONDS,
 )
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.records import LogRecord
 
 
 class AsyncFileHandlerTests(asynctest.TestCase):
@@ -77,6 +77,8 @@ class AsyncFileHandlerTests(asynctest.TestCase):
 
         self.assertEqual(content, "Xablau!\nXablau!\n")
 
+        await handler.close()
+
     async def test_init_stream_initializes_a_nonblocking_file_writer(self):
         handler = AsyncFileHandler(filename=self.temp_file.name)
 
@@ -86,11 +88,16 @@ class AsyncFileHandlerTests(asynctest.TestCase):
         self.assertFalse(handler.stream.closed)
         self.assertEqual(handler.stream._file.name, self.temp_file.name)
 
+        await handler.close()
+
     async def test_writer_is_initialized_only_once(self):
         handler = AsyncFileHandler(filename=self.temp_file.name)
 
         with patch(
-            "aiologger.handlers.files.aiofiles.open", CoroutineMock()
+            "aiologger.handlers.files.aiofiles.open",
+            CoroutineMock(
+                return_value=Mock(write=CoroutineMock(), flush=CoroutineMock())
+            ),
         ) as open:
             await asyncio.gather(
                 *(handler.emit(self.record) for _ in range(42))
@@ -172,7 +179,9 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
         with patch(
             "aiologger.handlers.files.AsyncFileHandler.emit",
             side_effect=OSError,
-        ), patch.object(handler, "handleError", CoroutineMock()) as handleError:
+        ), patch.object(
+            handler, "handle_error", CoroutineMock()
+        ) as handleError:
             log_record = LogRecord(
                 name="Xablau",
                 level=20,
@@ -310,11 +319,13 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
         )
 
         file_paths = [NamedTemporaryFile(delete=False).name for _ in range(3)]
-
+        await handler._init_writer()
         await handler._delete_files(file_paths)
 
         for file_path in file_paths:
             self.assertFalse(os.path.exists(file_path))
+
+        await handler.close()
 
     async def test_files_to_delete_returns_an_empty_list_if_there_is_nothing_to_delete(
         self

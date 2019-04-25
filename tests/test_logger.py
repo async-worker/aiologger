@@ -3,7 +3,6 @@ import inspect
 import logging
 import unittest
 import os
-from logging import LogRecord
 from typing import Tuple
 
 import asynctest
@@ -12,6 +11,7 @@ from asynctest import CoroutineMock, Mock, patch, call
 from aiologger.filters import StdoutFilter
 from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.logger import Logger
+from aiologger.records import LogRecord
 
 
 class LoggerOutsideEventLoopTest(unittest.TestCase):
@@ -97,7 +97,7 @@ class LoggerTests(asynctest.TestCase):
             exc_info=None,
             args=None,
         )
-        await logger.callHandlers(record)
+        await logger.call_handlers(record)
 
         level10_handler.handle.assert_awaited_once_with(record)
         level30_handler.handle.assert_not_awaited()
@@ -116,7 +116,7 @@ class LoggerTests(asynctest.TestCase):
             args=None,
         )
         with self.assertRaises(Exception):
-            await logger.callHandlers(record)
+            await logger.call_handlers(record)
 
     async def test_it_calls_multiple_handlers_if_multiple_handle_matches_are_found_for_record(
         self
@@ -137,7 +137,7 @@ class LoggerTests(asynctest.TestCase):
             args=None,
         )
 
-        await logger.callHandlers(record)
+        await logger.call_handlers(record)
 
         level10_handler.handle.assert_awaited_once_with(record)
         level20_handler.handle.assert_awaited_once_with(record)
@@ -149,7 +149,7 @@ class LoggerTests(asynctest.TestCase):
         with patch.object(
             logger, "filter", return_value=True
         ) as filter, asynctest.patch.object(
-            logger, "callHandlers"
+            logger, "call_handlers"
         ) as callHandlers:
             record = Mock()
             await logger.handle(record)
@@ -159,7 +159,7 @@ class LoggerTests(asynctest.TestCase):
 
     async def test_it_doesnt_calls_handlers_if_logger_is_disabled(self):
         logger = Logger.with_default_handlers()
-        with asynctest.patch.object(logger, "callHandlers") as callHandlers:
+        with asynctest.patch.object(logger, "call_handlers") as callHandlers:
             record = Mock()
             logger.disabled = True
             await logger.handle(record)
@@ -171,7 +171,7 @@ class LoggerTests(asynctest.TestCase):
         with patch.object(
             logger, "filter", return_value=False
         ) as filter, asynctest.patch.object(
-            logger, "callHandlers"
+            logger, "call_handlers"
         ) as callHandlers:
             record = Mock()
             await logger.handle(record)
@@ -360,7 +360,7 @@ class LoggerTests(asynctest.TestCase):
         self.assertIsNone(logger._dummy_task)
 
         with patch.object(
-            logger, "isEnabledFor", return_value=False
+            logger, "is_enabled_for", return_value=False
         ) as isEnabledFor, patch.object(logger, "_dummy_task") as _dummy_task:
             log_task = logger.info("im disabled")
             isEnabledFor.assert_called_once_with(logging.INFO)

@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime
-from logging import LogRecord
 
 from aiologger.formatters.json import JsonFormatter
+from aiologger.records import LogRecord
 from aiologger.utils import CallableWrapper
 
 

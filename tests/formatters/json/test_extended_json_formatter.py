@@ -10,13 +10,13 @@ from aiologger.formatters.json import (
     LOG_LEVEL_FIELDNAME,
     LINE_NUMBER_FIELDNAME,
 )
-from aiologger.loggers.json import LogRecord
+from aiologger.records import ExtendedLogRecord
 
 
 class ExtendedJsonFormatterTests(unittest.TestCase):
     def setUp(self):
         self.formatter = ExtendedJsonFormatter()
-        self.record = LogRecord(
+        self.record = ExtendedLogRecord(
             level=30,
             name="aiologger",
             pathname="/aiologger/tests/formatters/test_json_formatter.py",
