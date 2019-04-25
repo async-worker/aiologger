@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from asyncio import StreamWriter
+from asyncio import AbstractEventLoop, StreamWriter
 from typing import Union, Optional
 
 from aiologger.filters import Filter
@@ -20,6 +20,8 @@ class AsyncStreamHandler(Handler):
         level: Union[str, int, LogLevel] = LogLevel.NOTSET,
         formatter: Formatter = None,
         filter: Filter = None,
+        *,
+        loop: Optional[AbstractEventLoop] = None,
     ) -> None:
         super().__init__()
         if stream is None:

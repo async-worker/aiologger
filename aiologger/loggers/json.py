@@ -18,7 +18,7 @@ class JsonLogger(Logger):
         flatten: bool = False,
         serializer_kwargs: Dict = None,
         extra: Dict = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
     ) -> None:
         super().__init__(name=name, level=level, loop=loop)
 
@@ -43,7 +43,7 @@ class JsonLogger(Logger):
         serializer_kwargs: Dict = None,
         extra: Dict = None,
         exclude_fields: Iterable[str] = None,
-        loop: AbstractEventLoop = None,
+        loop: Optional[AbstractEventLoop] = None,
         tz: timezone = None,
         formatter: Optional[logging.Formatter] = None,
     ):
