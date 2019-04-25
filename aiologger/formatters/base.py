@@ -4,7 +4,7 @@ import time
 import traceback
 from string import Template
 
-from aiologger.record import LogRecord
+from aiologger.records import LogRecord
 
 
 class FormatStyles(str, enum.Enum):

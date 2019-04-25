@@ -7,28 +7,7 @@ from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Awaitable
 from aiologger import Logger
 from aiologger.formatters.json import ExtendedJsonFormatter
 from aiologger.logger import _Caller
-
-
-class LogRecord(logging.LogRecord):
-    def __init__(
-        self,
-        name,
-        level,
-        pathname,
-        lineno,
-        msg,
-        args,
-        exc_info,
-        func=None,
-        sinfo=None,
-        **kwargs,
-    ):
-        super().__init__(
-            name, level, pathname, lineno, msg, args, exc_info, func, sinfo
-        )
-        self.extra = kwargs["extra"]
-        self.flatten = kwargs["flatten"]
-        self.serializer_kwargs = kwargs["serializer_kwargs"]
+from aiologger.records import ExtendedLogRecord
 
 
 class JsonLogger(Logger):

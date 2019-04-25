@@ -90,7 +90,7 @@ class ExtendedJsonFormatter(JsonFormatter):
 
     def formatter_fields_for_record(self, record):
         """
-        :type record: aiologger.loggers.json.LogRecord
+        :type record: aiologger.records.ExtendedLogRecord
         """
         datetime_serialized = (
             datetime.now(timezone.utc).astimezone(self.tz).isoformat()
@@ -110,7 +110,7 @@ class ExtendedJsonFormatter(JsonFormatter):
 
     def format(self, record) -> str:
         """
-        :type record: aiologger.loggers.json.LogRecord
+        :type record: aiologger.records.ExtendedLogRecord
         """
         msg = dict(self.formatter_fields_for_record(record))
         if record.flatten and isinstance(record.msg, dict):
