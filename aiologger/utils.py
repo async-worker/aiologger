@@ -1,3 +1,4 @@
+import sys
 from typing import Callable
 
 
@@ -15,3 +16,15 @@ class CallableWrapper:
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
+
+
+if hasattr(sys, "_getframe"):
+    get_current_frame = lambda: sys._getframe(3)
+else:  # pragma: no cover
+
+    def get_current_frame():
+        """Return the frame object for the caller's stack frame."""
+        try:
+            raise Exception
+        except Exception:
+            return sys.exc_info()[2].tb_frame.f_back
