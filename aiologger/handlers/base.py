@@ -30,27 +30,9 @@ class Handler(Filterer):
         and the filter list to empty.
         """
         Filterer.__init__(self)
-        self._name = None
         self._level = check_level(level)
         self.formatter: Optional[Formatter] = None
         self._loop: Optional[asyncio.AbstractEventLoop] = loop
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-        # _acquireLock()
-        # try:
-        #     if self._name in _handlers:
-        #         del _handlers[self._name]
-        #     self._name = name
-        #     if name:
-        #         _handlers[name] = self
-        # finally:
-        #     _releaseLock()
 
     @property
     def loop(self):
