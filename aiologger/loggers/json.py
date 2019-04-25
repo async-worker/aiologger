@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import timezone
 from asyncio import AbstractEventLoop
-from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Awaitable
+from typing import Dict, Iterable, Callable, Tuple, Any, Optional
 
 from aiologger import Logger
 from aiologger.formatters.json import ExtendedJsonFormatter
@@ -74,8 +74,8 @@ class JsonLogger(Logger):
         caller: _Caller = None,
     ):
         """
-        Low-level logging routine which creates a LogRecord and then calls
-        all the handlers of this logger to handle the record.
+        Low-level logging routine which creates a ExtendedLogRecord and
+        then calls all the handlers of this logger to handle the record.
 
         Overwritten to properly handle log methods kwargs
         """
@@ -93,7 +93,7 @@ class JsonLogger(Logger):
         if extra:
             joined_extra.update(extra)
 
-        record = LogRecord(
+        record = ExtendedLogRecord(
             name=self.name,
             level=level,
             pathname=fn,
