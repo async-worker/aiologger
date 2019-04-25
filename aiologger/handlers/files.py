@@ -9,13 +9,13 @@ import enum
 import os
 import re
 import time
-from logging import Handler, LogRecord
 from typing import Callable, List
 
 import aiofiles
 from aiofiles.threadpool import AsyncTextIOWrapper
 
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.records import LogRecord
 from aiologger.utils import classproperty
 
 
@@ -23,21 +23,17 @@ class AsyncFileHandler(AsyncStreamHandler):
     def __init__(
         self, filename: str, mode: str = "a", encoding: str = None
     ) -> None:
+        super().__init__()
         filename = os.fspath(filename)
         self.absolute_file_path = os.path.abspath(filename)
         self.mode = mode
         self.encoding = encoding
         self.stream: AsyncTextIOWrapper = None
         self._initialization_lock = asyncio.Lock()
-        Handler.__init__(self)
 
     @property
     def initialized(self):
         return self.stream is not None
-
-    @property
-    def loop(self):
-        return asyncio.get_event_loop()
 
     async def _init_writer(self):
         """
@@ -59,16 +55,16 @@ class AsyncFileHandler(AsyncStreamHandler):
             await self.stream.flush()
         await self.stream.close()
 
-    async def emit(self, record: LogRecord):  # type: ignore
+    async def emit(self, record: LogRecord):
         if not self.initialized:
             await self._init_writer()
 
         try:
-            msg = self.format(record) + self.terminator
+            msg = self.formatter.format(record) + self.terminator
             await self.stream.write(msg)
             await self.stream.flush()
         except Exception as e:
-            await self.handleError(record)
+            await self.handle_error(record)
 
 
 Namer = Callable[[str], str]
@@ -111,7 +107,7 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
                         await self.do_rollover()
             await super().emit(record)
         except Exception as e:
-            await self.handleError(record)
+            await self.handle_error(record)
 
     def rotation_filename(self, default_name: str) -> str:
         """
