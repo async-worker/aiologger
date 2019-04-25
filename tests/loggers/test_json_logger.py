@@ -1,7 +1,6 @@
 import asyncio
 import json
 import inspect
-import logging
 import os
 from datetime import datetime, timezone, timedelta
 from typing import Tuple
@@ -10,6 +9,7 @@ from unittest.mock import Mock, patch
 import asynctest
 from asynctest import CoroutineMock
 
+from aiologger.levels import LogLevel
 from aiologger.loggers.json import JsonLogger
 from aiologger.records import ExtendedLogRecord
 from aiologger.formatters.json import (
@@ -32,7 +32,7 @@ class JsonLoggerTests(asynctest.TestCase):
         self.stream_reader, self.reader_transport = (
             await self._make_read_pipe_stream_reader()
         )
-        self.logger = JsonLogger.with_default_handlers(level=logging.DEBUG)
+        self.logger = JsonLogger.with_default_handlers(level=LogLevel.DEBUG)
 
     async def tearDown(self):
         self.write_pipe.close()
@@ -109,7 +109,7 @@ class JsonLoggerTests(asynctest.TestCase):
         now = datetime.now(tz=timezone.utc).astimezone(desired_tz).isoformat()
 
         logger = JsonLogger.with_default_handlers(
-            level=logging.DEBUG, tz=desired_tz
+            level=LogLevel.DEBUG, tz=desired_tz
         )
         await logger.error("Batemos tambores, eles panela.")
 
@@ -258,7 +258,6 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(message["logged_at"], logged_content["logged_at"])
 
-    @patch("logging.StreamHandler.terminator", "")
     async def test_it_forwards_serializer_kwargs_parameter_to_serializer(self):
         message = {
             "logged_at": "Yesterday",
@@ -281,7 +280,6 @@ class JsonLoggerTests(asynctest.TestCase):
 
         self.assertEqual(logged_content.decode(), expected_content + "\n")
 
-    @patch("logging.StreamHandler.terminator", "")
     async def test_it_forwards_serializer_kwargs_instance_attr_to_serializer(
         self
     ):

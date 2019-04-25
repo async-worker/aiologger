@@ -92,7 +92,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
     async def test_emit_writes_records_into_the_stream(self):
         msg = self.record.msg
         formatter = Mock(format=Mock(return_value=msg))
-        writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
+        writer = Mock(write=Mock(), drain=CoroutineMock())
 
         with patch(
             "aiologger.handlers.streams.StreamWriter", return_value=writer
@@ -107,6 +107,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
                 (msg + handler.terminator).encode()
             )
             writer.drain.assert_awaited_once()
+            await handler.close()
 
     async def test_emit_calls_handleError_if_an_erro_occurs(self):
         writer = Mock(write=CoroutineMock(), drain=CoroutineMock())

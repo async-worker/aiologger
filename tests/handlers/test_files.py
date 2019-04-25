@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import logging
 import os
 import time
 from tempfile import NamedTemporaryFile
@@ -11,6 +10,7 @@ from aiofiles.threadpool import AsyncTextIOWrapper
 from asynctest import CoroutineMock, Mock
 from freezegun import freeze_time
 
+from aiologger.formatters.base import Formatter
 from aiologger.handlers.files import (
     AsyncFileHandler,
     BaseAsyncRotatingFileHandler,
@@ -23,6 +23,7 @@ from aiologger.handlers.files import (
 )
 from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.records import LogRecord
+from tests.utils import make_log_record
 
 
 class AsyncFileHandlerTests(asynctest.TestCase):
@@ -274,15 +275,15 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
             when=RolloverInterval.SECONDS,
             backup_count=1,
         )
-        formatter = logging.Formatter("%(asctime)s %(message)s")
+        formatter = Formatter("%(asctime)s %(message)s")
         handler.formatter = formatter
-        r1 = logging.makeLogRecord({"msg": "testing - initial"})
+        r1 = make_log_record(msg="testing - initial")
         await handler.emit(r1)
         self.assertTrue(os.path.exists(self.temp_file.name))
 
         await asyncio.sleep(1.1)
 
-        r2 = logging.makeLogRecord({"msg": "testing - after delay"})
+        r2 = make_log_record(msg="testing - after delay")
         await handler.emit(r2)
         await handler.close()
         # At this point, we should have a recent rotated file which we
@@ -381,14 +382,14 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
             when=RolloverInterval.SECONDS,
             backup_count=1,
         )
-        formatter = logging.Formatter("%(asctime)s %(message)s")
+        formatter = Formatter("%(asctime)s %(message)s")
         handler.formatter = formatter
 
         self.assertTrue(os.path.exists(self.temp_file.name))
 
         await asyncio.sleep(1.1)
 
-        record = logging.makeLogRecord({"msg": "testing - initial"})
+        record = make_log_record(msg="testing - initial")
         await handler.emit(record)
         await handler.close()
 

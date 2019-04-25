@@ -1,6 +1,5 @@
 import asyncio
 import inspect
-import logging
 import unittest
 import os
 from typing import Tuple
@@ -10,6 +9,7 @@ from asynctest import CoroutineMock, Mock, patch, call
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.levels import LogLevel
 from aiologger.logger import Logger
 from aiologger.records import LogRecord
 
@@ -67,7 +67,7 @@ class LoggerTests(asynctest.TestCase):
             self.assertCountEqual(logger.handlers, handlers)
 
             self.assertCountEqual(
-                [logging.DEBUG, logging.WARNING],
+                [LogLevel.DEBUG, LogLevel.WARNING],
                 [call[1]["level"] for call in handler_init.call_args_list],
             )
 
@@ -322,7 +322,7 @@ class LoggerTests(asynctest.TestCase):
         logger.handlers[1].close.assert_called_once()
 
     async def test_logger_handlers_are_not_initialized_twice(self):
-        handler = Mock(spec=AsyncStreamHandler, level=logging.DEBUG)
+        handler = Mock(spec=AsyncStreamHandler, level=LogLevel.DEBUG)
         with patch(
             "aiologger.logger.AsyncStreamHandler", return_value=handler
         ) as Handler:
@@ -339,13 +339,13 @@ class LoggerTests(asynctest.TestCase):
                 [
                     call(
                         stream=self.write_pipe,
-                        level=logging.DEBUG,
+                        level=LogLevel.DEBUG,
                         formatter=formatter,
                         filter=StdoutFilter(),
                     ),
                     call(
                         stream=self.write_pipe,
-                        level=logging.WARNING,
+                        level=LogLevel.WARNING,
                         formatter=formatter,
                     ),
                 ]
@@ -363,7 +363,7 @@ class LoggerTests(asynctest.TestCase):
             logger, "is_enabled_for", return_value=False
         ) as isEnabledFor, patch.object(logger, "_dummy_task") as _dummy_task:
             log_task = logger.info("im disabled")
-            isEnabledFor.assert_called_once_with(logging.INFO)
+            isEnabledFor.assert_called_once_with(LogLevel.INFO)
             self.assertEqual(log_task, _dummy_task)
 
     async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
