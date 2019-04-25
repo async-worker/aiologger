@@ -1,5 +1,6 @@
 import abc
 import asyncio
+from asyncio import AbstractEventLoop
 from typing import Optional, Union
 
 from aiologger.filters import Filterer
@@ -18,7 +19,12 @@ class Handler(Filterer):
     the 'raw' message as determined by record.message is logged.
     """
 
-    def __init__(self, level: LogLevel = LogLevel.NOTSET) -> None:
+    def __init__(
+        self,
+        level: LogLevel = LogLevel.NOTSET,
+        *,
+        loop: Optional[AbstractEventLoop] = None,
+    ) -> None:
         """
         Initializes the instance - basically setting the formatter to None
         and the filter list to empty.
@@ -27,7 +33,7 @@ class Handler(Filterer):
         self._name = None
         self._level = check_level(level)
         self.formatter: Optional[Formatter] = None
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = loop
 
     @property
     def name(self):

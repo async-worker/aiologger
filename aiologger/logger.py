@@ -68,7 +68,7 @@ class Logger(Filterer):
         name="aiologger",
         level=LogLevel.NOTSET,
         formatter: Optional[Formatter] = None,
-        loop: Optional[AbstractEventLoop]=None,
+        loop: Optional[AbstractEventLoop] = None,
         **kwargs,
     ):
         self = cls(name=name, level=level, loop=loop, **kwargs)  # type: ignore
@@ -83,7 +83,10 @@ class Logger(Filterer):
         )
         self.add_handler(
             AsyncStreamHandler(
-                stream=sys.stderr, level=LogLevel.WARNING, formatter=formatter, loop=loop
+                stream=sys.stderr,
+                level=LogLevel.WARNING,
+                formatter=formatter,
+                loop=loop,
             )
         )
 

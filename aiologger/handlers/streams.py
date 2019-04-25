@@ -23,7 +23,7 @@ class AsyncStreamHandler(Handler):
         *,
         loop: Optional[AbstractEventLoop] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(loop=loop)
         if stream is None:
             stream = sys.stderr
         self.stream = stream
