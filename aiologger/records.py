@@ -4,13 +4,14 @@
 import os
 import time
 from collections import Mapping
+from typing import Optional
 
 from aiologger.levels import LogLevel, get_level_name
 
 
 class LogRecord:
     """
-    A ExtendedLogRecord instance represents an event being logged.
+    A LogRecord instance represents an event being logged.
 
     ExtendedLogRecord instances are created every time something is logged. They
     contain all the information pertinent to the event being logged. The
@@ -33,7 +34,7 @@ class LogRecord:
         func=None,
         sinfo=None,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize a logging record with interesting information.
         """
@@ -71,25 +72,20 @@ class LogRecord:
             self.filename = pathname
             self.module = "Unknown module"
         self.exc_info = exc_info
-        self.exc_text = None  # used to cache the traceback text
+        self.exc_text: Optional[str] = None  # used to cache the traceback text
         self.stack_info = sinfo
         self.lineno = lineno
         self.funcName = func
         self.created = ct
         self.msecs = (ct - int(ct)) * 1000
-
-        if hasattr(os, "getpid"):
-            self.process = os.getpid()
-        else:
-            self.process = None
+        self.process = os.getpid()
+        self.asctime: Optional[str] = None
+        self.message: Optional[str] = None
 
     def __str__(self):
-        return '<ExtendedLogRecord: %s, %s, %s, %s, "%s">' % (
-            self.name,
-            self.levelno,
-            self.pathname,
-            self.lineno,
-            self.msg,
+        return (
+            f"<{self.__class__.__name__}: {self.name}, {self.levelno}, "
+            f'{self.pathname}, {self.lineno}, "{self.msg}">'
         )
 
     __repr__ = __str__

@@ -86,7 +86,7 @@ class Filterer(ABC):
         """
         rv = True
         for f in self.filters:
-            if hasattr(f, "filter"):
+            if isinstance(f, Filter):
                 result = f.filter(record)
             else:
                 result = f(record)  # assume callable - will raise if not

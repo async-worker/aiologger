@@ -30,7 +30,7 @@ class AsyncStreamHandler(Handler):
         self.level = level
         if formatter is None:
             formatter = Formatter()
-        self.formatter = formatter
+        self.formatter: Formatter = formatter
         if filter:
             self.add_filter(filter)
         self.protocol_class = AiologgerProtocol

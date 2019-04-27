@@ -1,10 +1,13 @@
 import json
-import logging
 import traceback
 from datetime import datetime
 from inspect import istraceback
 from typing import Callable, Iterable, Union
 from datetime import timezone
+
+from aiologger.formatters.base import Formatter
+from aiologger.levels import LEVEL_TO_NAME
+from aiologger.records import LogRecord
 from aiologger.utils import CallableWrapper
 
 
@@ -16,7 +19,7 @@ MSG_FIELDNAME = "msg"
 FILE_PATH_FIELDNAME = "file_path"
 
 
-class JsonFormatter(logging.Formatter):
+class JsonFormatter(Formatter):
     def __init__(
         self,
         serializer: Callable[..., str] = json.dumps,
@@ -24,7 +27,6 @@ class JsonFormatter(logging.Formatter):
     ) -> None:
         super(JsonFormatter, self).__init__()
         self.serializer = serializer
-
         self.default_msg_fieldname = default_msg_fieldname or MSG_FIELDNAME
 
     def _default_handler(self, obj):
@@ -41,26 +43,26 @@ class JsonFormatter(logging.Formatter):
             return obj()
         return str(obj)
 
-    def format(self, record: logging.LogRecord) -> str:
+    def format(self, record: LogRecord) -> str:
         """
         Formats a record and serializes it as a JSON str. If record message isnt
         already a dict, initializes a new dict and uses `default_msg_fieldname`
         as a key as the record msg as the value.
         """
         msg: Union[str, dict] = record.msg
-        if not isinstance(record.msg, dict):
+        if not isinstance(msg, dict):
             msg = {self.default_msg_fieldname: msg}
 
-        if record.exc_info:  # type: ignore
+        if record.exc_info:
             msg["exc_info"] = record.exc_info
-        if record.exc_text:  # type: ignore
-            msg["exc_text"] = record.exc_text  # type: ignore
+        if record.exc_text:
+            msg["exc_text"] = record.exc_text
 
         return self.serializer(msg, default=self._default_handler)
 
 
 class ExtendedJsonFormatter(JsonFormatter):
-    level_to_name_mapping = logging._levelToName
+    level_to_name_mapping = LEVEL_TO_NAME
     default_fields = frozenset(
         [
             LOG_LEVEL_FIELDNAME,
@@ -88,7 +90,7 @@ class ExtendedJsonFormatter(JsonFormatter):
         else:
             self.log_fields = self.default_fields - set(exclude_fields)
 
-    def formatter_fields_for_record(self, record):
+    def formatter_fields_for_record(self, record: LogRecord):
         """
         :type record: aiologger.records.ExtendedLogRecord
         """

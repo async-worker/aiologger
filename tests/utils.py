@@ -6,7 +6,7 @@ def make_log_record(**kwargs) -> LogRecord:
     """
     Make a LogRecord whose attributes are defined by the specified kwargs
     """
-    record = LogRecord(
+    record = LogRecord(  # type: ignore
         name=None,
         level=LogLevel.NOTSET,
         pathname="",

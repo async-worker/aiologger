@@ -1,11 +1,12 @@
 import json
-import logging
 from datetime import timezone
 from asyncio import AbstractEventLoop
 from typing import Dict, Iterable, Callable, Tuple, Any, Optional
 
 from aiologger import Logger
+from aiologger.formatters.base import Formatter
 from aiologger.formatters.json import ExtendedJsonFormatter
+from aiologger.levels import LogLevel
 from aiologger.logger import _Caller
 from aiologger.records import ExtendedLogRecord
 
@@ -14,7 +15,7 @@ class JsonLogger(Logger):
     def __init__(
         self,
         name: str = "aiologger-json",
-        level: int = logging.DEBUG,
+        level: int = LogLevel.DEBUG,
         flatten: bool = False,
         serializer_kwargs: Dict = None,
         extra: Dict = None,
@@ -37,7 +38,7 @@ class JsonLogger(Logger):
         cls,
         *,
         name: str = "aiologger-json",
-        level: int = logging.NOTSET,
+        level: int = LogLevel.NOTSET,
         serializer: Callable[..., str] = json.dumps,
         flatten: bool = False,
         serializer_kwargs: Dict = None,
@@ -45,7 +46,7 @@ class JsonLogger(Logger):
         exclude_fields: Iterable[str] = None,
         loop: Optional[AbstractEventLoop] = None,
         tz: timezone = None,
-        formatter: Optional[logging.Formatter] = None,
+        formatter: Optional[Formatter] = None,
     ):
         if formatter is None:
             formatter = ExtendedJsonFormatter(

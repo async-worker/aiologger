@@ -3,6 +3,7 @@ import io
 import time
 import traceback
 from string import Template
+from typing import Union
 
 from aiologger.records import LogRecord
 
@@ -18,7 +19,7 @@ class PercentStyle:
     asctime_format = "%(asctime)s"
     asctime_search = "%(asctime)"
 
-    def __init__(self, fmt: str) -> None:
+    def __init__(self, fmt: str = None) -> None:
         self._fmt = fmt or self.default_format
         self.uses_time = self._fmt.find(self.asctime_search) >= 0
 
@@ -40,11 +41,12 @@ class StringTemplateStyle(PercentStyle):
     asctime_format = "${asctime}"
     asctime_search = "${asctime}"
 
-    def __init__(self, fmt: str) -> None:
+    def __init__(self, fmt: str = None) -> None:
         self._fmt = fmt or self.default_format
         self._template = Template(self._fmt)
         self.uses_time = (
-            fmt.find("$asctime") >= 0 or fmt.find(self.asctime_format) >= 0
+            self._fmt.find("$asctime") >= 0
+            or self._fmt.find(self.asctime_format) >= 0
         )
 
     def format(self, record: LogRecord) -> str:
@@ -102,13 +104,15 @@ class Formatter:
                         the record is emitted
     """
 
-    converter = time.localtime
     default_time_format = "%Y-%m-%d %H:%M:%S"
     default_msec_format = "%s,%03d"
     terminator = "\n"
 
     def __init__(
-        self, fmt: str = None, datefmt: str = None, style: FormatStyles = "%"
+        self,
+        fmt: str = None,
+        datefmt: str = None,
+        style: Union[str, FormatStyles] = "%",
     ) -> None:
         """
         Initialize the formatter with specified format strings.
@@ -127,11 +131,12 @@ class Formatter:
         """
         if style not in _STYLES:
             valid_styles = ",".join(_STYLES.keys())
-            raise ValueError(f"Style must be one of: ${valid_styles}")
+            raise ValueError(f"Style must be one of: {valid_styles}")
 
         self._style = _STYLES[style][0](fmt)
         self._fmt = self._style._fmt
         self.datefmt = datefmt
+        self.converter = time.localtime
 
     def format_time(self, record: LogRecord, datefmt: str = None) -> str:
         """

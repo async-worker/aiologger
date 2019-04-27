@@ -19,6 +19,12 @@ _HandlerFactory = Callable[[], Awaitable[Iterable[Handler]]]
 
 
 def o_o():
+    """
+    Ordinarily we would use __file__ for this, but frozen modules don't always
+    have __file__ set, for some reason (see Issue logging#21736). Thus, we get
+    the filename from a handy code object from a function defined in this
+    module.
+    """
     raise NotImplementedError(
         "I shouldn't be called. My only purpose is to provide "
         "the filename from a handy code object."
@@ -29,12 +35,7 @@ def o_o():
 # caller stack frame, by skipping frames whose filename is that of this
 # module's source. It therefore should contain the filename of this module's
 # source file.
-#
-# Ordinarily we would use __file__ for this, but frozen modules don't always
-# have __file__ set, for some reason (see Issue logging#21736). Thus, we get
-# the filename from a handy code object from a function defined in this module.
-#
-_srcfile = os.path.normcase(o_o.__code__.co_filename)
+_srcfile = o_o.__code__.co_filename
 
 
 class Logger(Filterer):
@@ -48,7 +49,6 @@ class Logger(Filterer):
         self.propagate = True
         self.handlers: List[Handler] = []
         self.disabled = False
-        self._cache = {}
         self._loop: Optional[AbstractEventLoop] = loop
         self._was_shutdown = False
 
@@ -94,7 +94,7 @@ class Logger(Filterer):
 
     def find_caller(
         self, stack_info=False
-    ) -> Tuple[str, int, str, Optional[str]]:
+    ) -> Tuple[Optional[str], int, str, Optional[str]]:
         """
         Find the stack frame of the caller so that we can note the source
         file name, line number and function name.
@@ -107,7 +107,7 @@ class Logger(Filterer):
         rv = "(unknown file)", 0, "(unknown function)", None
         while hasattr(frame, "f_code"):
             code = frame.f_code
-            filename = os.path.normcase(code.co_filename)
+            filename = code.co_filename
             if filename == _srcfile:
                 frame = frame.f_back
                 continue
@@ -120,8 +120,7 @@ class Logger(Filterer):
                 if sinfo[-1] == "\n":
                     sinfo = sinfo[:-1]
                 sio.close()
-            rv = (code.co_filename, frame.f_lineno, code.co_name, sinfo)
-            break
+            return code.co_filename, frame.f_lineno, code.co_name, sinfo
         return rv
 
     async def call_handlers(self, record):
