@@ -36,7 +36,28 @@ class LogRecord:
         **kwargs,
     ) -> None:
         """
-        Initialize a logging record with interesting information.
+        :param name: The name of the logger used to log the event represented
+        by this LogRecord. Note that this name will always have this value,
+        even though it may be emitted by a handler attached to a
+        different (ancestor) logger.
+        :param level: The numeric level of the logging event (one of DEBUG,
+        INFO etc.) Note that this is converted to two attributes of the
+        LogRecord: levelno for the numeric value and levelname for the
+        corresponding level name.
+        :param pathname: The full pathname of the source file where the
+        logging call was made.
+        :param lineno: The line number in the source file where the logging
+        call was made.
+        :param msg: The event description message, possibly a format string
+        with placeholders for variable data.
+        :param args: Variable data to merge into the msg argument to obtain
+        the event description.
+        :param exc_info: An exception tuple with the current exception
+        information, or None if no exception information is available.
+        :param func: The name of the function or method from which the
+        logging call was invoked.
+        :param sinfo: A text string representing stack information from the
+        base of the stack in the current thread, up to the logging call.
         """
         ct = time.time()
         self.name = name
@@ -54,7 +75,7 @@ class LogRecord:
         # 'Value is %d' instead of 'Value is 0'.
         # For the use case of passing a dictionary, this should not be a
         # problem.
-        # Issue #21172: a request was made to relax the isinstance check
+        # Issue logging#21172: a request was made to relax the isinstance check
         # to hasattr(args[0], '__getitem__'). However, the docs on string
         # formatting still seem to suggest a mapping object is required.
         # Thus, while not removing the isinstance check, it does now look
