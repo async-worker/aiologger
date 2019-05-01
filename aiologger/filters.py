@@ -43,6 +43,8 @@ class Filter:
             return False
         return record.name[self.name_length] == "."
 
+    __call__ = filter
+
 
 _FilterCallable = Callable[[LogRecord], bool]
 
@@ -81,15 +83,11 @@ class Filterer(ABC):
         this and the record is then dropped. Returns a zero value if a record
         is to be dropped, else non-zero.
         """
-        rv = True
-        for f in self.filters:
-            if isinstance(f, Filter):
-                result = f.filter(record)
-            else:
-                result = f(record)  # assume callable - will raise if not
+        for filter in self.filters:
+            result = filter(record)
             if not result:
                 return False
-        return rv
+        return True
 
 
 class StdoutFilter(Filter):
