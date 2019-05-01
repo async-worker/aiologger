@@ -34,15 +34,12 @@ class Filter:
     def filter(self, record: LogRecord) -> bool:
         """
         Determine if the specified record is to be logged.
-
-        Is the specified record to be logged? Returns 0 for no, nonzero for
-        yes. If deemed appropriate, the record may be modified in-place.
         """
         if self.name_length == 0:
             return True
         elif self.name == record.name:
             return True
-        elif record.name.find(self.name, 0, self.name_length) != 0:
+        elif not record.name.startswith(self.name):
             return False
         return record.name[self.name_length] == "."
 
