@@ -13,7 +13,7 @@ class LogLevel(enum.IntEnum):
     NOTSET = 0
 
 
-NAME_TO_LEVEL = {level.name: level.value for level in LogLevel}
+NAME_TO_LEVEL = {level: LogLevel[level].value for level in LogLevel.__members__}
 LEVEL_TO_NAME = {level.value: level.name for level in LogLevel}
 
 
