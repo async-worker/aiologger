@@ -4,7 +4,15 @@ import os
 import sys
 import traceback
 from asyncio import AbstractEventLoop, Task
-from typing import Iterable, Optional, Callable, Awaitable, Tuple, List
+from typing import (
+    Iterable,
+    Optional,
+    Callable,
+    Awaitable,
+    Tuple,
+    List,
+    NamedTuple,
+)
 
 from aiologger.filters import StdoutFilter, Filterer
 from aiologger.formatters.base import Formatter
@@ -14,8 +22,15 @@ from aiologger.levels import LogLevel, check_level
 from aiologger.records import LogRecord
 from aiologger.utils import get_current_frame
 
-_Caller = Tuple[str, int, str, Optional[str]]
+# _Caller = Tuple[str, int, str, Optional[str]]
 _HandlerFactory = Callable[[], Awaitable[Iterable[Handler]]]
+
+
+class _Caller(NamedTuple):
+    filename: str
+    line_number: int
+    function_name: str
+    stack: Optional[str]
 
 
 def o_o():
@@ -92,9 +107,7 @@ class Logger(Filterer):
 
         return self
 
-    def find_caller(
-        self, stack_info=False
-    ) -> Tuple[Optional[str], int, str, Optional[str]]:
+    def find_caller(self, stack_info=False) -> _Caller:
         """
         Find the stack frame of the caller so that we can note the source
         file name, line number and function name.
@@ -104,7 +117,6 @@ class Logger(Filterer):
         # IronPython isn't run with -X:Frames.
         if frame is not None:
             frame = frame.f_back
-        rv = "(unknown file)", 0, "(unknown function)", None
         while hasattr(frame, "f_code"):
             code = frame.f_code
             filename = code.co_filename
@@ -120,8 +132,18 @@ class Logger(Filterer):
                 if sinfo[-1] == "\n":
                     sinfo = sinfo[:-1]
                 sio.close()
-            return code.co_filename, frame.f_lineno, code.co_name, sinfo
-        return rv
+            return _Caller(
+                filename=code.co_filename,
+                line_number=frame.f_lineno,
+                function_name=code.co_name,
+                stack=sinfo,
+            )
+        return _Caller(
+            filename="(unknown file)",
+            line_number=0,
+            function_name="(unknown function)",
+            stack=None,
+        )
 
     async def call_handlers(self, record):
         """

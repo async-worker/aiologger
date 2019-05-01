@@ -5,7 +5,7 @@ import os
 from typing import Tuple
 
 import asynctest
-from asynctest import CoroutineMock, Mock, patch, call
+from asynctest import CoroutineMock, Mock, patch, call, ANY
 
 from aiologger.filters import StdoutFilter
 from aiologger.handlers.streams import AsyncStreamHandler
@@ -242,6 +242,12 @@ class LoggerTests(asynctest.TestCase):
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
 
+    async def test_it_blocks_logs_with_level_lower_than_Logger_level(self):
+        logger = Logger.with_default_handlers(level=LogLevel.CRITICAL)
+        await logger.info("Xablau")
+
+        self.assertEqual(len(self.stream_reader._buffer), 0)
+
     async def test_it_logs_exception_messages(self):
         logger = Logger.with_default_handlers()
 
@@ -387,3 +393,62 @@ class LoggerTests(asynctest.TestCase):
 
         await logger.info("Xablau")
         self.assertIsInstance(logger._loop, asyncio.AbstractEventLoop)
+
+    def test_find_caller_without_stack_info(self):
+        logger = Logger()
+
+        def caller_function():
+            def log_function():
+                def make_log_task():
+                    return logger.find_caller()
+
+                return make_log_task()
+
+            return log_function()
+
+        caller = caller_function()
+        self.assertEqual(caller, (__file__, ANY, "caller_function", None))
+
+    def test_find_caller_with_stack_info(self):
+        logger = Logger()
+
+        def caller_function():
+            def log_function():
+                def make_log_task():
+                    try:
+                        raise ValueError("Xablau!")
+                    except Exception:
+                        return logger.find_caller(True)
+
+                return make_log_task()
+
+            return log_function()
+
+        caller = caller_function()
+
+        self.assertEqual(caller.filename, __file__)
+        self.assertEqual(caller.function_name, "caller_function")
+        self.assertIn("return log_function()", caller.stack)
+
+    def test_find_caller_without_current_frame_code(self):
+        logger = Logger()
+
+        with patch(
+            "aiologger.logger.get_current_frame",
+            return_value=Mock(f_back=object()),
+        ):
+            caller = logger.find_caller()
+
+        self.assertEqual(caller.filename, "(unknown file)")
+        self.assertEqual(caller.line_number, 0)
+        self.assertEqual(caller.function_name, "(unknown function)")
+        self.assertIsNone(caller.stack)
+
+    def test_removehandler_removes_handler_if_handler_in_handlers(self):
+        logger = Logger()
+        handler = Mock()
+
+        logger.handlers = [handler]
+
+        logger.remove_handler(handler)
+        self.assertEqual(logger.handlers, [])
