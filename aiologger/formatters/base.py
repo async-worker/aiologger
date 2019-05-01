@@ -5,7 +5,7 @@ import traceback
 from string import Template
 from typing import Union
 
-from aiologger.records import LogRecord
+from aiologger.records import LogRecord, ExceptionInfo
 
 
 class FormatStyles(str, enum.Enum):
@@ -158,13 +158,12 @@ class Formatter:
         """
         ct = self.converter(record.created)
         if datefmt:
-            s = time.strftime(datefmt, ct)
+            return time.strftime(datefmt, ct)
         else:
             t = time.strftime(self.default_time_format, ct)
-            s = self.default_msec_format % (t, record.msecs)
-        return s
+            return self.default_msec_format % (t, record.msecs)
 
-    def format_exception(self, exception_info: list) -> str:
+    def format_exception(self, exception_info: ExceptionInfo) -> str:
         """
         Format and return the specified exception information as a string.
 

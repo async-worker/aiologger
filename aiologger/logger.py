@@ -1,18 +1,9 @@
 import asyncio
 import io
-import os
 import sys
 import traceback
 from asyncio import AbstractEventLoop, Task
-from typing import (
-    Iterable,
-    Optional,
-    Callable,
-    Awaitable,
-    Tuple,
-    List,
-    NamedTuple,
-)
+from typing import Iterable, Optional, Callable, Awaitable, List, NamedTuple
 
 from aiologger.filters import StdoutFilter, Filterer
 from aiologger.formatters.base import Formatter
@@ -22,7 +13,6 @@ from aiologger.levels import LogLevel, check_level
 from aiologger.records import LogRecord
 from aiologger.utils import get_current_frame
 
-# _Caller = Tuple[str, int, str, Optional[str]]
 _HandlerFactory = Callable[[], Awaitable[Iterable[Handler]]]
 
 
