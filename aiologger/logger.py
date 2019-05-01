@@ -133,7 +133,7 @@ class Logger(Filterer):
                     sinfo = sinfo[:-1]
                 sio.close()
             return _Caller(
-                filename=code.co_filename,
+                filename=code.co_filename or "(unknown file)",
                 line_number=frame.f_lineno,
                 function_name=code.co_name,
                 stack=sinfo,
