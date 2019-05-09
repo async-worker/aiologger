@@ -479,3 +479,68 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
                 )
             finally:
                 await handler.close()
+
+    async def test_it_calls_handler_error_if_emit_fails(self):
+        temp_file = NamedTemporaryFile(delete=False)
+        handler = AsyncFileHandler(temp_file.name)
+        log_record = LogRecord(
+            name="Xablau",
+            level=20,
+            pathname="/aiologger/tests/test_logger.py",
+            lineno=17,
+            msg="Xablau!",
+            exc_info=None,
+            args=None,
+        )
+        await handler._init_writer()
+
+        with patch.object(
+            handler.stream, "write", side_effect=Exception
+        ), patch.object(
+            handler, "handle_error", CoroutineMock()
+        ) as handle_error:
+            await handler.emit(log_record)
+            handle_error.assert_awaited_once_with(log_record)
+
+    # async def test_compute_rollover_handles_dst_properly_if_rollover_occurs_between_dst_change(
+    #     self
+    # ):
+    #     handler = AsyncTimedRotatingFileHandler(
+    #         filename=self.temp_file.name,
+    #         when=RolloverInterval.MIDNIGHT,
+    #         interval=1,
+    #         backup_count=0,
+    #         utc=False,
+    #     )
+    #
+    #     # 2019-05-02 23:59:00 GMT
+    #     current_time = 1_556_841_540
+    #
+    #     tm_year = 2019
+    #     tm_mon = 5
+    #     tm_mday = 3
+    #     tm_hour = 0
+    #     tm_min = 0
+    #     tm_sec = 0
+    #     tm_wday = 1
+    #     tm_day = 122
+    #     tm_isdst = 1
+    #
+    #     mocked_dst_time = (
+    #         tm_year,
+    #         tm_mon,
+    #         tm_mday,
+    #         tm_hour,
+    #         tm_min,
+    #         tm_sec,
+    #         tm_wday,
+    #         tm_day,
+    #         tm_isdst,
+    #     )
+    #     with patch(
+    #         "aiologger.handlers.files.time.localtime",
+    #         side_effect=[time.localtime(current_time), mocked_dst_time],
+    #     ):
+    #         rollover_at = handler.compute_rollover(current_time)
+    #         self.assertEqual()
+    #         # ta dificil !
