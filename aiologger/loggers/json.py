@@ -1,7 +1,7 @@
 import json
 from datetime import timezone
 from asyncio import AbstractEventLoop
-from typing import Dict, Iterable, Callable, Tuple, Any, Optional
+from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Mapping
 
 from aiologger import Logger
 from aiologger.formatters.base import Formatter
@@ -64,9 +64,9 @@ class JsonLogger(Logger):
 
     async def _log(  # type: ignore
         self,
-        level: int,
+        level: LogLevel,
         msg: Any,
-        args: Tuple,
+        args: Optional[Tuple[Mapping]],
         exc_info=None,
         extra: Dict = None,
         stack_info=False,

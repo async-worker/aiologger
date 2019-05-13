@@ -127,7 +127,7 @@ class ExtendedLogRecord(LogRecord):
         func: Optional[str] = None,
         sinfo: Optional[str] = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(
             name, level, pathname, lineno, msg, args, exc_info, func, sinfo
         )
