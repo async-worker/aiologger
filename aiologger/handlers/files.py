@@ -340,18 +340,19 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
                         days_to_wait = self.day_of_week - day
                     else:
                         days_to_wait = 6 - day + self.day_of_week + 1
-                    new_rollover_at = result + (days_to_wait * (60 * 60 * 24))
+                    new_rollover_at = result + (
+                        days_to_wait * ONE_DAY_IN_SECONDS
+                    )
                     if not self.utc:
                         dst_now = t[-1]
                         dst_at_rollover = time.localtime(new_rollover_at)[-1]
                         if dst_now != dst_at_rollover:
                             if not dst_now:
                                 # DST kicks in before next rollover, so we need to deduct an hour
-                                addend = -ONE_HOUR_IN_SECONDS
+                                new_rollover_at -= ONE_HOUR_IN_SECONDS
                             else:
                                 # DST bows out before next rollover, so we need to add an hour
-                                addend = ONE_HOUR_IN_SECONDS
-                            new_rollover_at += addend
+                                new_rollover_at += ONE_HOUR_IN_SECONDS
                     result = new_rollover_at
         return result
 

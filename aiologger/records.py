@@ -32,8 +32,8 @@ class LogRecord:
         pathname: str,
         lineno: int,
         msg,
-        args: Optional[Tuple[Mapping]],
-        exc_info: Optional[ExceptionInfo],
+        args: Optional[Tuple[Mapping]] = None,
+        exc_info: Optional[ExceptionInfo] = None,
         func: Optional[str] = None,
         sinfo: Optional[str] = None,
         **kwargs,
@@ -62,7 +62,7 @@ class LogRecord:
         :param sinfo: A text string representing stack information from the
         base of the stack in the current thread, up to the logging call.
         """
-        ct = time.time()
+        created_at = time.time()
         self.name = name
         self.msg = msg
         self.args: Optional[Mapping]
@@ -89,15 +89,15 @@ class LogRecord:
         self.stack_info = sinfo
         self.lineno = lineno
         self.funcName = func
-        self.created = ct
-        self.msecs = (ct - int(ct)) * 1000
+        self.created = created_at
+        self.msecs = (created_at - int(created_at)) * 1000
         self.process = os.getpid()
         self.asctime: Optional[str] = None
         self.message: Optional[str] = None
 
     def __str__(self):
         return (
-            f"<{self.__class__.__name__}: {self.name}, {self.levelno}, "
+            f"<{self.__class__.__name__}: {self.name}, {self.levelname}, "
             f'{self.pathname}, {self.lineno}, "{self.msg}">'
         )
 
@@ -105,9 +105,7 @@ class LogRecord:
 
     def get_message(self):
         """
-        Return the message for this ExtendedLogRecord.
-
-        Return the message for this ExtendedLogRecord after merging any user-supplied
+        Return the message for this LogRecord after merging any user-supplied
         arguments with the message.
         """
         msg = str(self.msg)
@@ -119,15 +117,15 @@ class LogRecord:
 class ExtendedLogRecord(LogRecord):
     def __init__(
         self,
-        name,
-        level,
-        pathname,
-        lineno,
+        name: str,
+        level: LogLevel,
+        pathname: str,
+        lineno: int,
         msg,
-        args,
-        exc_info,
-        func=None,
-        sinfo=None,
+        args: Optional[Tuple[Mapping]],
+        exc_info: Optional[ExceptionInfo],
+        func: Optional[str] = None,
+        sinfo: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(
