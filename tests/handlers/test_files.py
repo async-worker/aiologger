@@ -187,9 +187,9 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
     ):
         handler = BaseAsyncRotatingFileHandler(filename=self.temp_file.name)
         handler.should_rollover = Mock(return_value=False)
+        exc = OSError()
         with patch(
-            "aiologger.handlers.files.AsyncFileHandler.emit",
-            side_effect=OSError,
+            "aiologger.handlers.files.AsyncFileHandler.emit", side_effect=exc
         ), patch.object(
             handler, "handle_error", CoroutineMock()
         ) as handleError:
@@ -203,7 +203,7 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
                 args=None,
             )
             await handler.emit(log_record)
-            handleError.assert_awaited_once_with(log_record)
+            handleError.assert_awaited_once_with(log_record, exc)
 
     async def test_rotation_filename_uses_the_default_if_a_namer_isnt_provided(
         self
@@ -493,14 +493,14 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
             args=None,
         )
         await handler._init_writer()
-
+        exc = Exception("Xablau")
         with patch.object(
-            handler.stream, "write", side_effect=Exception
+            handler.stream, "write", side_effect=exc
         ), patch.object(
             handler, "handle_error", CoroutineMock()
         ) as handle_error:
             await handler.emit(log_record)
-            handle_error.assert_awaited_once_with(log_record)
+            handle_error.assert_awaited_once_with(log_record, exc)
 
     # async def test_compute_rollover_handles_dst_properly_if_rollover_occurs_between_dst_change(
     #     self

@@ -109,20 +109,23 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
             writer.drain.assert_awaited_once()
             await handler.close()
 
-    async def test_emit_calls_handleError_if_an_erro_occurs(self):
+    async def test_emit_calls_handle_error_if_an_error_occurs(self):
         writer = Mock(write=CoroutineMock(), drain=CoroutineMock())
         with patch(
             "aiologger.handlers.streams.StreamWriter", return_value=writer
         ):
+            exc = Exception("XABLAU")
             handler = AsyncStreamHandler(
                 level=10,
                 stream=self.write_pipe,
-                formatter=Mock(side_effect=Exception),
+                formatter=Mock(format=Mock(side_effect=exc)),
             )
-            with asynctest.patch.object(handler, "handle_error") as handleError:
+            with asynctest.patch.object(
+                handler, "handle_error"
+            ) as handle_error:
                 await handler.emit(self.record)
 
-                handleError.assert_awaited_once_with(self.record)
+                handle_error.assert_awaited_once_with(self.record, exc)
                 writer.write.assert_not_awaited()
                 writer.drain.assert_not_awaited()
 
@@ -162,3 +165,14 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         self.assertFalse(handler.initialized)
         await handler._init_writer()
         self.assertTrue(handler.initialized)
+
+    async def test_handle_error(self):
+        handler = AsyncStreamHandler(
+            level=10,
+            stream=self.write_pipe,
+            formatter=Mock(side_effect=Exception),
+        )
+        await handler._init_writer()
+        exc = IOError("Something bad happened")
+        with patch.object(handler.writer, "write", side_effect=exc):
+            await handler.handle(self.record)
