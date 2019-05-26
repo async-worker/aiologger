@@ -71,8 +71,8 @@ class AsyncFileHandler(AsyncStreamHandler):
             msg = self.formatter.format(record) + self.terminator
             await self.stream.write(msg)
             await self.stream.flush()
-        except Exception as e:
-            await self.handle_error(record)
+        except Exception as exc:
+            await self.handle_error(record, exc)
 
 
 Namer = Callable[[str], str]
@@ -116,8 +116,8 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
                     if self.should_rollover(record):
                         await self.do_rollover()
             await super().emit(record)
-        except Exception as e:
-            await self.handle_error(record)
+        except Exception as exc:
+            await self.handle_error(record, exc)
 
     def rotation_filename(self, default_name: str) -> str:
         """

@@ -2,7 +2,7 @@ import json
 import traceback
 from datetime import datetime
 from inspect import istraceback
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable, Union, Dict
 from datetime import timezone
 
 from aiologger.formatters.base import Formatter
@@ -59,6 +59,23 @@ class JsonFormatter(Formatter):
             msg["exc_text"] = record.exc_text
 
         return self.serializer(msg, default=self._default_handler)
+
+    @classmethod
+    def format_error_msg(cls, record: LogRecord, exception: Exception) -> Dict:
+        return {
+            "record": {
+                LINE_NUMBER_FIELDNAME: record.lineno,
+                LOG_LEVEL_FIELDNAME: record.levelname,
+                FILE_PATH_FIELDNAME: record.filename,
+                MSG_FIELDNAME: str(record.msg),
+            },
+            LOGGED_AT_FIELDNAME: datetime.utcnow().isoformat(),
+            "logger_exception": {
+                "type": str(type(exception)),
+                "exc": str(exception),
+                "traceback": cls.format_traceback(exception.__traceback__),
+            },
+        }
 
 
 class ExtendedJsonFormatter(JsonFormatter):

@@ -1,10 +1,14 @@
 import abc
 import asyncio
+import json
+import sys
 from asyncio import AbstractEventLoop
 from typing import Optional, Union
 
+from aiologger import settings
 from aiologger.filters import Filterer
 from aiologger.formatters.base import Formatter
+from aiologger.formatters.json import JsonFormatter
 from aiologger.levels import LogLevel, get_level_name, check_level
 from aiologger.records import LogRecord
 
@@ -63,7 +67,7 @@ class Handler(Filterer):
             "emit must be implemented by Handler subclasses"
         )
 
-    async def handle(self, record: LogRecord) -> bool:  # type: ignore
+    async def handle(self, record: LogRecord) -> bool:
         """
         Conditionally emit the specified logging record.
 
@@ -98,7 +102,9 @@ class Handler(Filterer):
             "close must be implemented by Handler subclasses"
         )
 
-    async def handle_error(self, record: LogRecord) -> None:
+    async def handle_error(
+        self, record: LogRecord, exception: Exception
+    ) -> None:
         """
         Handle errors which occur during an emit() call.
 
@@ -110,8 +116,11 @@ class Handler(Filterer):
         You could, however, replace this with a custom handler if you wish.
         The record which was being processed is passed in to this method.
         """
-        print("handle_error:", record)
-        pass  # pragma: no cover
+        if not settings.HANDLE_ERROR_FALLBACK_ENABLED:
+            return
+
+        msg = JsonFormatter.format_error_msg(record, exception)
+        json.dump(msg, sys.stderr)
 
     def __repr__(self):
         level = get_level_name(self.level)

@@ -83,8 +83,8 @@ class AsyncStreamHandler(Handler):
 
             self.writer.write(msg.encode())
             await self.writer.drain()
-        except Exception:
-            await self.handle_error(record)
+        except Exception as exc:
+            await self.handle_error(record, exc)
 
     async def close(self):
         """

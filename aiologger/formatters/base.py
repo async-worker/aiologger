@@ -3,7 +3,8 @@ import io
 import time
 import traceback
 from string import Template
-from typing import Union
+from typing import Union, List
+from types import TracebackType
 
 from aiologger.records import LogRecord, ExceptionInfo
 
@@ -198,6 +199,11 @@ class Formatter:
         The base implementation just returns the value passed in.
         """
         return stack_info
+
+    @staticmethod
+    def format_traceback(tb: TracebackType) -> List[str]:
+        formatted_tb = "".join(traceback.format_tb(tb))
+        return formatted_tb.strip().split("\n")
 
     def format(self, record: LogRecord) -> str:
         """
