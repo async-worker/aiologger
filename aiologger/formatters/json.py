@@ -67,6 +67,7 @@ class JsonFormatter(Formatter):
                 LINE_NUMBER_FIELDNAME: record.lineno,
                 LOG_LEVEL_FIELDNAME: record.levelname,
                 FILE_PATH_FIELDNAME: record.filename,
+                FUNCTION_NAME_FIELDNAME: record.funcName,
                 MSG_FIELDNAME: str(record.msg),
             },
             LOGGED_AT_FIELDNAME: datetime.utcnow().isoformat(),

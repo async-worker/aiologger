@@ -1,5 +1,8 @@
 import unittest
 from datetime import datetime
+from unittest.mock import ANY
+
+from freezegun import freeze_time
 
 from aiologger.formatters.json import JsonFormatter
 from aiologger.records import LogRecord
@@ -15,6 +18,7 @@ class JsonFormatterTests(unittest.TestCase):
             lineno=42,
             msg="Xablau",
             exc_info=None,
+            func="a_function_name",
             args=None,
         )
         self.formatter = JsonFormatter()
@@ -42,6 +46,33 @@ class JsonFormatterTests(unittest.TestCase):
 
         msg = self.formatter.format(self.record)
         self.assertEqual(msg, self.formatter.serializer({"dog": "Xablau"}))
+
+    @freeze_time("2019-06-01T19:20:13.401262")
+    def test_format_error_msg(self):
+        try:
+            raise OSError("Broken pipe")
+        except Exception as e:
+            msg = self.formatter.format_error_msg(
+                record=self.record, exception=e
+            )
+        self.assertEqual(
+            msg,
+            {
+                "record": {
+                    "line_number": 42,
+                    "level": "WARNING",
+                    "file_path": "test_json_formatter.py",
+                    "function": "a_function_name",
+                    "msg": "Xablau",
+                },
+                "logged_at": "2019-06-01T19:20:13.401262",
+                "logger_exception": {
+                    "type": "<class 'OSError'>",
+                    "exc": "Broken pipe",
+                    "traceback": ANY,
+                },
+            },
+        )
 
 
 class DefaultHandlerTests(unittest.TestCase):
