@@ -109,8 +109,7 @@ class Handler(Filterer):
         Handle errors which occur during an emit() call.
 
         This method should be called from handlers when an exception is
-        encountered during an emit() call. If raiseExceptions is false,
-        exceptions get silently ignored. This is what is mostly wanted
+        encountered during an emit() call. This is what is mostly wanted
         for a logging system - most users will not care about errors in
         the logging system, they are more interested in application errors.
         You could, however, replace this with a custom handler if you wish.
@@ -121,6 +120,7 @@ class Handler(Filterer):
 
         msg = JsonFormatter.format_error_msg(record, exception)
         json.dump(msg, sys.stderr)
+        sys.stderr.write("\n")
 
     def __repr__(self):
         level = get_level_name(self.level)
