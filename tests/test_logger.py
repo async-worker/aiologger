@@ -12,6 +12,7 @@ from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.levels import LogLevel
 from aiologger.logger import Logger
 from aiologger.records import LogRecord
+from tests.utils import make_read_pipe_stream_reader
 
 
 class LoggerOutsideEventLoopTest(unittest.TestCase):
@@ -35,8 +36,8 @@ class LoggerTests(asynctest.TestCase):
         patch("aiologger.logger.sys.stdout", self.write_pipe).start()
         patch("aiologger.logger.sys.stderr", self.write_pipe).start()
 
-        self.stream_reader, self.reader_transport = (
-            await self._make_read_pipe_stream_reader()
+        self.stream_reader, self.reader_transport = await make_read_pipe_stream_reader(
+            self.loop, self.read_pipe
         )
 
     def tearDown(self):
@@ -44,17 +45,6 @@ class LoggerTests(asynctest.TestCase):
         self.write_pipe.close()
         self.reader_transport.close()
         patch.stopall()
-
-    async def _make_read_pipe_stream_reader(
-        self
-    ) -> Tuple[asyncio.StreamReader, asyncio.ReadTransport]:
-        reader = asyncio.StreamReader(loop=self.loop)
-        protocol = asyncio.StreamReaderProtocol(reader)
-
-        transport, protocol = await self.loop.connect_read_pipe(
-            lambda: protocol, self.read_pipe
-        )
-        return reader, transport
 
     async def test_init_with_default_handlers_initializes_handlers_for_stdout_and_stderr(
         self
