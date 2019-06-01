@@ -166,7 +166,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         await handler._init_writer()
         self.assertTrue(handler.initialized)
 
-    async def test_handle_error(self):
+    async def test_handle_error_writes_logs_to_stderr_if_emit_fails(self):
         handler = AsyncStreamHandler(
             level=10,
             stream=self.write_pipe,
@@ -174,5 +174,27 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         )
         await handler._init_writer()
         exc = IOError("Something bad happened")
-        with patch.object(handler.writer, "write", side_effect=exc):
+        with patch.object(handler.writer, "write", side_effect=exc), patch(
+            "aiologger.handlers.base.sys.stderr"
+        ) as stderr:
             await handler.handle(self.record)
+            stderr.write.assert_called()
+
+    async def test_handle_error_doesnt_writes_logs_to_stderr_if_emit_fails_and_fallback_is_disabled(
+        self
+    ):
+        handler = AsyncStreamHandler(
+            level=10,
+            stream=self.write_pipe,
+            formatter=Mock(side_effect=Exception),
+        )
+        await handler._init_writer()
+        exc = IOError("Something bad happened")
+        with patch.object(handler.writer, "write", side_effect=exc), patch(
+            "aiologger.handlers.base.sys.stderr"
+        ) as stderr, patch(
+            "aiologger.handlers.base.settings.HANDLE_ERROR_FALLBACK_ENABLED",
+            False,
+        ):
+            await handler.handle(self.record)
+            stderr.write.assert_not_called()
