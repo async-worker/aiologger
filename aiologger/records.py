@@ -4,7 +4,7 @@
 import os
 import time
 import types
-from collections import Mapping
+from collections.abc import Mapping
 from typing import Optional, Tuple, Type
 
 from aiologger.levels import LogLevel, get_level_name
