@@ -2,7 +2,7 @@ import json
 import traceback
 from datetime import datetime
 from inspect import istraceback
-from typing import Callable, Iterable, Union, Dict
+from typing import Callable, Iterable, Union, Dict, Optional, List
 from datetime import timezone
 
 from aiologger.formatters.base import Formatter
@@ -62,6 +62,11 @@ class JsonFormatter(Formatter):
 
     @classmethod
     def format_error_msg(cls, record: LogRecord, exception: Exception) -> Dict:
+        traceback_info: Optional[List[str]]
+        if exception.__traceback__:
+            traceback_info = cls.format_traceback(exception.__traceback__)
+        else:
+            traceback_info = None
         return {
             "record": {
                 LINE_NUMBER_FIELDNAME: record.lineno,
@@ -74,7 +79,7 @@ class JsonFormatter(Formatter):
             "logger_exception": {
                 "type": str(type(exception)),
                 "exc": str(exception),
-                "traceback": cls.format_traceback(exception.__traceback__),
+                "traceback": traceback_info,
             },
         }
 
