@@ -74,6 +74,30 @@ class JsonFormatterTests(unittest.TestCase):
             },
         )
 
+    @freeze_time("2019-06-01T19:20:13.401262")
+    def test_format_error_msg_without_traceback(self):
+        msg = self.formatter.format_error_msg(
+            record=self.record, exception=OSError("Broken pipe")
+        )
+        self.assertEqual(
+            msg,
+            {
+                "record": {
+                    "line_number": 42,
+                    "level": "WARNING",
+                    "file_path": "test_json_formatter.py",
+                    "function": "a_function_name",
+                    "msg": "Xablau",
+                },
+                "logged_at": "2019-06-01T19:20:13.401262",
+                "logger_exception": {
+                    "type": "<class 'OSError'>",
+                    "exc": "Broken pipe",
+                    "traceback": ANY,
+                },
+            },
+        )
+
 
 class DefaultHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -120,3 +144,11 @@ class DefaultHandlerTests(unittest.TestCase):
         result = self.formatter._default_handler(MyException)
 
         self.assertEqual(result, str(MyException))
+
+    def test_it_converts_tracebacks_into_a_list_of_strings(self):
+        try:
+            raise ValueError("Xablau")
+        except Exception as e:
+            result = self.formatter._default_handler(e.__traceback__)
+            self.assertEqual(len(result), 2)
+            self.assertIn('raise ValueError("Xablau")', result[1])
