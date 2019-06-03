@@ -1,9 +1,7 @@
 import asyncio
 import datetime
-import logging
 import os
 import time
-from logging import LogRecord
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
 
@@ -12,6 +10,7 @@ from aiofiles.threadpool import AsyncTextIOWrapper
 from asynctest import CoroutineMock, Mock
 from freezegun import freeze_time
 
+from aiologger.formatters.base import Formatter
 from aiologger.handlers.files import (
     AsyncFileHandler,
     BaseAsyncRotatingFileHandler,
@@ -23,6 +22,8 @@ from aiologger.handlers.files import (
     ONE_HOUR_IN_SECONDS,
 )
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.records import LogRecord
+from tests.utils import make_log_record
 
 
 class AsyncFileHandlerTests(asynctest.TestCase):
@@ -87,6 +88,8 @@ class AsyncFileHandlerTests(asynctest.TestCase):
 
         self.assertEqual(content, "Xablau!\nXablau!\n")
 
+        await handler.close()
+
     async def test_init_stream_initializes_a_nonblocking_file_writer(self):
         handler = AsyncFileHandler(filename=self.temp_file.name)
 
@@ -96,11 +99,16 @@ class AsyncFileHandlerTests(asynctest.TestCase):
         self.assertFalse(handler.stream.closed)
         self.assertEqual(handler.stream._file.name, self.temp_file.name)
 
+        await handler.close()
+
     async def test_writer_is_initialized_only_once(self):
         handler = AsyncFileHandler(filename=self.temp_file.name)
 
         with patch(
-            "aiologger.handlers.files.aiofiles.open", CoroutineMock()
+            "aiologger.handlers.files.aiofiles.open",
+            CoroutineMock(
+                return_value=Mock(write=CoroutineMock(), flush=CoroutineMock())
+            ),
         ) as open:
             await asyncio.gather(
                 *(handler.emit(self.record) for _ in range(42))
@@ -179,10 +187,12 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
     ):
         handler = BaseAsyncRotatingFileHandler(filename=self.temp_file.name)
         handler.should_rollover = Mock(return_value=False)
+        exc = OSError()
         with patch(
-            "aiologger.handlers.files.AsyncFileHandler.emit",
-            side_effect=OSError,
-        ), patch.object(handler, "handleError", CoroutineMock()) as handleError:
+            "aiologger.handlers.files.AsyncFileHandler.emit", side_effect=exc
+        ), patch.object(
+            handler, "handle_error", CoroutineMock()
+        ) as handleError:
             log_record = LogRecord(
                 name="Xablau",
                 level=20,
@@ -193,7 +203,7 @@ class BaseAsyncRotatingFileHandlerTests(asynctest.TestCase):
                 args=None,
             )
             await handler.emit(log_record)
-            handleError.assert_awaited_once_with(log_record)
+            handleError.assert_awaited_once_with(log_record, exc)
 
     async def test_rotation_filename_uses_the_default_if_a_namer_isnt_provided(
         self
@@ -265,15 +275,15 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
             when=RolloverInterval.SECONDS,
             backup_count=1,
         )
-        formatter = logging.Formatter("%(asctime)s %(message)s")
+        formatter = Formatter("%(asctime)s %(message)s")
         handler.formatter = formatter
-        r1 = logging.makeLogRecord({"msg": "testing - initial"})
+        r1 = make_log_record(msg="testing - initial")
         await handler.emit(r1)
         self.assertTrue(os.path.exists(self.temp_file.name))
 
         await asyncio.sleep(1.1)
 
-        r2 = logging.makeLogRecord({"msg": "testing - after delay"})
+        r2 = make_log_record(msg="testing - after delay")
         await handler.emit(r2)
         await handler.close()
         # At this point, we should have a recent rotated file which we
@@ -320,11 +330,13 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
         )
 
         file_paths = [NamedTemporaryFile(delete=False).name for _ in range(3)]
-
+        await handler._init_writer()
         await handler._delete_files(file_paths)
 
         for file_path in file_paths:
             self.assertFalse(os.path.exists(file_path))
+
+        await handler.close()
 
     async def test_files_to_delete_returns_an_empty_list_if_there_is_nothing_to_delete(
         self
@@ -370,14 +382,14 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
             when=RolloverInterval.SECONDS,
             backup_count=1,
         )
-        formatter = logging.Formatter("%(asctime)s %(message)s")
+        formatter = Formatter("%(asctime)s %(message)s")
         handler.formatter = formatter
 
         self.assertTrue(os.path.exists(self.temp_file.name))
 
         await asyncio.sleep(1.1)
 
-        record = logging.makeLogRecord({"msg": "testing - initial"})
+        record = make_log_record(msg="testing - initial")
         await handler.emit(record)
         await handler.close()
 
@@ -467,3 +479,68 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
                 )
             finally:
                 await handler.close()
+
+    async def test_it_calls_handler_error_if_emit_fails(self):
+        temp_file = NamedTemporaryFile(delete=False)
+        handler = AsyncFileHandler(temp_file.name)
+        log_record = LogRecord(
+            name="Xablau",
+            level=20,
+            pathname="/aiologger/tests/test_logger.py",
+            lineno=17,
+            msg="Xablau!",
+            exc_info=None,
+            args=None,
+        )
+        await handler._init_writer()
+        exc = Exception("Xablau")
+        with patch.object(
+            handler.stream, "write", side_effect=exc
+        ), patch.object(
+            handler, "handle_error", CoroutineMock()
+        ) as handle_error:
+            await handler.emit(log_record)
+            handle_error.assert_awaited_once_with(log_record, exc)
+
+    # async def test_compute_rollover_handles_dst_properly_if_rollover_occurs_between_dst_change(
+    #     self
+    # ):
+    #     handler = AsyncTimedRotatingFileHandler(
+    #         filename=self.temp_file.name,
+    #         when=RolloverInterval.MIDNIGHT,
+    #         interval=1,
+    #         backup_count=0,
+    #         utc=False,
+    #     )
+    #
+    #     # 2019-05-02 23:59:00 GMT
+    #     current_time = 1_556_841_540
+    #
+    #     tm_year = 2019
+    #     tm_mon = 5
+    #     tm_mday = 3
+    #     tm_hour = 0
+    #     tm_min = 0
+    #     tm_sec = 0
+    #     tm_wday = 1
+    #     tm_day = 122
+    #     tm_isdst = 1
+    #
+    #     mocked_dst_time = (
+    #         tm_year,
+    #         tm_mon,
+    #         tm_mday,
+    #         tm_hour,
+    #         tm_min,
+    #         tm_sec,
+    #         tm_wday,
+    #         tm_day,
+    #         tm_isdst,
+    #     )
+    #     with patch(
+    #         "aiologger.handlers.files.time.localtime",
+    #         side_effect=[time.localtime(current_time), mocked_dst_time],
+    #     ):
+    #         rollover_at = handler.compute_rollover(current_time)
+    #         self.assertEqual()
+    #         # ta dificil !

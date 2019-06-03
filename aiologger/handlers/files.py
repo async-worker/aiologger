@@ -10,13 +10,13 @@ import os
 import re
 import time
 from asyncio import AbstractEventLoop
-from logging import Handler, LogRecord
 from typing import Callable, List, Optional
 
 import aiofiles
 from aiofiles.threadpool import AsyncTextIOWrapper
 
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.records import LogRecord
 from aiologger.utils import classproperty
 
 
@@ -29,14 +29,14 @@ class AsyncFileHandler(AsyncStreamHandler):
         *,
         loop: Optional[AbstractEventLoop] = None,
     ) -> None:
+        super().__init__(loop=loop)
         filename = os.fspath(filename)
         self.absolute_file_path = os.path.abspath(filename)
         self.mode = mode
         self.encoding = encoding
         self.stream: AsyncTextIOWrapper = None
-        self.loop = loop or asyncio.get_event_loop()
+        self._initialization_lock = asyncio.Lock()
         self._initialization_lock = asyncio.Lock(loop=self.loop)
-        Handler.__init__(self)
 
     @property
     def initialized(self):
@@ -63,16 +63,16 @@ class AsyncFileHandler(AsyncStreamHandler):
             await self.stream.flush()
         await self.stream.close()
 
-    async def emit(self, record: LogRecord):  # type: ignore
+    async def emit(self, record: LogRecord):
         if not self.initialized:
             await self._init_writer()
 
         try:
-            msg = self.format(record) + self.terminator
+            msg = self.formatter.format(record) + self.terminator
             await self.stream.write(msg)
             await self.stream.flush()
-        except Exception as e:
-            await self.handleError(record)
+        except Exception as exc:
+            await self.handle_error(record, exc)
 
 
 Namer = Callable[[str], str]
@@ -116,8 +116,8 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
                     if self.should_rollover(record):
                         await self.do_rollover()
             await super().emit(record)
-        except Exception as e:
-            await self.handleError(record)
+        except Exception as exc:
+            await self.handle_error(record, exc)
 
     def rotation_filename(self, default_name: str) -> str:
         """
@@ -340,18 +340,19 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
                         days_to_wait = self.day_of_week - day
                     else:
                         days_to_wait = 6 - day + self.day_of_week + 1
-                    new_rollover_at = result + (days_to_wait * (60 * 60 * 24))
+                    new_rollover_at = result + (
+                        days_to_wait * ONE_DAY_IN_SECONDS
+                    )
                     if not self.utc:
                         dst_now = t[-1]
                         dst_at_rollover = time.localtime(new_rollover_at)[-1]
                         if dst_now != dst_at_rollover:
                             if not dst_now:
                                 # DST kicks in before next rollover, so we need to deduct an hour
-                                addend = -ONE_HOUR_IN_SECONDS
+                                new_rollover_at -= ONE_HOUR_IN_SECONDS
                             else:
                                 # DST bows out before next rollover, so we need to add an hour
-                                addend = ONE_HOUR_IN_SECONDS
-                            new_rollover_at += addend
+                                new_rollover_at += ONE_HOUR_IN_SECONDS
                     result = new_rollover_at
         return result
 
