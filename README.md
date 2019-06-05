@@ -21,7 +21,7 @@ pip install aiologger
 
 ```
 pipenv install --dev
-py.test
+pipenv run test
 ```
 
 # Implemented interfaces
