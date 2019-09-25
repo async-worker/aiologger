@@ -119,9 +119,10 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         in `do_rollover`.
         """
         try:
-            if not self._rollover_lock:
-                self._rollover_lock = asyncio.Lock(loop=self.loop)
             if self.should_rollover(record):
+                if not self._rollover_lock:
+                    self._rollover_lock = asyncio.Lock(loop=self.loop)
+
                 async with self._rollover_lock:
                     if self.should_rollover(record):
                         await self.do_rollover()
