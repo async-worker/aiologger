@@ -103,7 +103,7 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         self.encoding = encoding
         self.namer = namer
         self.rotator = rotator
-        self._rollover_lock = None
+        self._rollover_lock: Optional[asyncio.Lock] = None
 
     def should_rollover(self, record: LogRecord) -> bool:
         raise NotImplementedError
