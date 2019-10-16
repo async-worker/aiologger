@@ -210,9 +210,11 @@ import asyncio
 from aiologger import Logger
 
 
-async def main():
-    logger = Logger.with_default_handlers(name='my-logger')
+logger = Logger.with_default_handlers(name='my-logger')
 
+
+async def main():
+    
     await logger.debug("debug at stdout")
     await logger.info("info at stdout")
 
