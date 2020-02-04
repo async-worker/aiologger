@@ -210,6 +210,21 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
 
     If `backup_count` is > 0, when rollover is done, no more than `backup_count`
     files are kept - the oldest ones are deleted.
+
+    | when       | at_time behavior                                       |
+    |------------|--------------------------------------------------------|
+    | SECONDS    | at_time will be ignored                                |
+    | MINUTES    | -- // --                                               |
+    | HOURS      | -- // --                                               |
+    | DAYS       | at_time will be IGNORED. See also MIDNIGHT             |
+    | MONDAYS    | rotation happens every WEEK on MONDAY at ${at_time}    |
+    | TUESDAYS   | rotation happens every WEEK on TUESDAY at ${at_time}   |
+    | WEDNESDAYS | rotation happens every WEEK on WEDNESDAY at ${at_time} |
+    | THUERDAYS  | rotation happens every WEEK on THUERDAY at ${at_time}  |
+    | FRIDAYS    | rotation happens every WEEK on FRIDAY at ${at_time}    |
+    | SATURDAYS  | rotation happens every WEEK on SATURDAY at ${at_time}  |
+    | SUNDAYS    | rotation happens every WEEK on SUNDAY at ${at_time}    |
+    | MIDNIGHT   | rotation happens every DAY at ${at_time}               |
     """
 
     def __init__(
@@ -399,6 +414,7 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         if len(result) < self.backup_count:
             return []
         else:
+            result.sort(reverse=True)  # os.listdir order is not defined
             return result[: len(result) - self.backup_count]
 
     async def _delete_files(self, file_paths: List[str]):
