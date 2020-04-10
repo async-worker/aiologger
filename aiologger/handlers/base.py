@@ -43,6 +43,11 @@ class Handler(Filterer):
         self._loop: Optional[asyncio.AbstractEventLoop] = loop
 
     @property
+    @abc.abstractmethod
+    def initialized(self):
+        raise NotImplementedError()
+
+    @property
     def loop(self):
         if self._loop is None:
             self._loop = asyncio.get_event_loop()
