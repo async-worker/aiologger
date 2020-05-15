@@ -1,6 +1,6 @@
 import json
 from datetime import timezone
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, Task
 from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Mapping
 
 from aiologger import Logger
@@ -62,7 +62,7 @@ class JsonLogger(Logger):
             formatter=formatter,
         )
 
-    async def _log(  # type: ignore
+    def _log(  # type: ignore
         self,
         level: LogLevel,
         msg: Any,
@@ -73,7 +73,7 @@ class JsonLogger(Logger):
         flatten: bool = False,
         serializer_kwargs: Dict = None,
         caller: _Caller = None,
-    ):
+    ) -> Task:
         """
         Low-level logging routine which creates a ExtendedLogRecord and
         then calls all the handlers of this logger to handle the record.
@@ -108,4 +108,4 @@ class JsonLogger(Logger):
             flatten=flatten or self.flatten,
             serializer_kwargs=serializer_kwargs or self.serializer_kwargs,
         )
-        await self.handle(record)
+        return self.loop.create_task(self.handle(record))

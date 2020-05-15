@@ -183,7 +183,7 @@ class Logger(Filterer):
         if (not self.disabled) and self.filter(record):
             await self.call_handlers(record)
 
-    async def _log(
+    def _log(
         self,
         level,
         msg,
@@ -192,7 +192,7 @@ class Logger(Filterer):
         extra=None,
         stack_info=False,
         caller: _Caller = None,
-    ):
+    ) -> Task:
 
         sinfo = None
         if _srcfile and caller is None:  # type: ignore
@@ -222,7 +222,7 @@ class Logger(Filterer):
             sinfo=sinfo,
             extra=extra,
         )
-        await self.handle(record)
+        return self.loop.create_task(self.handle(record))
 
     def __make_dummy_task(self) -> Task:
         async def _dummy(*args, **kwargs):
@@ -247,10 +247,9 @@ class Logger(Filterer):
             if not isinstance(kwargs["exc_info"], BaseException):
                 kwargs["exc_info"] = sys.exc_info()
 
-        coro = self._log(  # type: ignore
+        return self._log(  # type: ignore
             level, msg, *args, caller=self.find_caller(False), **kwargs
         )
-        return self.loop.create_task(coro)
 
     def debug(self, msg, *args, **kwargs) -> Task:
         """
