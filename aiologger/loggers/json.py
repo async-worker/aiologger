@@ -4,6 +4,7 @@ from asyncio import AbstractEventLoop, Task
 from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Mapping
 
 from aiologger import Logger
+from aiologger.utils import create_task
 from aiologger.formatters.base import Formatter
 from aiologger.formatters.json import ExtendedJsonFormatter
 from aiologger.levels import LogLevel
@@ -19,9 +20,8 @@ class JsonLogger(Logger):
         flatten: bool = False,
         serializer_kwargs: Dict = None,
         extra: Dict = None,
-        loop: Optional[AbstractEventLoop] = None,
     ) -> None:
-        super().__init__(name=name, level=level, loop=loop)
+        super().__init__(name=name, level=level)
 
         self.flatten = flatten
 
@@ -44,7 +44,6 @@ class JsonLogger(Logger):
         serializer_kwargs: Dict = None,
         extra: Dict = None,
         exclude_fields: Iterable[str] = None,
-        loop: Optional[AbstractEventLoop] = None,
         tz: timezone = None,
         formatter: Optional[Formatter] = None,
     ):
@@ -55,7 +54,6 @@ class JsonLogger(Logger):
         return super(JsonLogger, cls).with_default_handlers(
             name=name,
             level=level,
-            loop=loop,
             flatten=flatten,
             serializer_kwargs=serializer_kwargs,
             extra=extra,
@@ -108,4 +106,4 @@ class JsonLogger(Logger):
             flatten=flatten or self.flatten,
             serializer_kwargs=serializer_kwargs or self.serializer_kwargs,
         )
-        return self.loop.create_task(self.handle(record))
+        return create_task(self.handle(record))
