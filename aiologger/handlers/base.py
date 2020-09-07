@@ -6,6 +6,7 @@ from asyncio import AbstractEventLoop
 from typing import Optional, Union
 
 from aiologger import settings
+from aiologger.utils import loop_compat
 from aiologger.filters import Filterer
 from aiologger.formatters.base import Formatter
 from aiologger.formatters.json import JsonFormatter
@@ -17,6 +18,7 @@ from aiologger.records import LogRecord
 _default_formatter = Formatter()
 
 
+@loop_compat
 class Handler(Filterer):
     """
     Handler instances dispatch logging events to specific destinations.

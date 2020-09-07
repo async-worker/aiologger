@@ -17,9 +17,10 @@ from aiofiles.threadpool import AsyncTextIOWrapper
 
 from aiologger.handlers.base import Handler
 from aiologger.records import LogRecord
-from aiologger.utils import classproperty, get_running_loop
+from aiologger.utils import classproperty, get_running_loop, loop_compat
 
 
+@loop_compat
 class AsyncFileHandler(Handler):
     terminator = "\n"
 

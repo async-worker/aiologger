@@ -4,7 +4,7 @@ from asyncio import AbstractEventLoop, Task
 from typing import Dict, Iterable, Callable, Tuple, Any, Optional, Mapping
 
 from aiologger import Logger
-from aiologger.utils import create_task
+from aiologger.utils import create_task, loop_compat
 from aiologger.formatters.base import Formatter
 from aiologger.formatters.json import ExtendedJsonFormatter
 from aiologger.levels import LogLevel
@@ -12,6 +12,7 @@ from aiologger.logger import _Caller
 from aiologger.records import ExtendedLogRecord
 
 
+@loop_compat
 class JsonLogger(Logger):
     def __init__(
         self,

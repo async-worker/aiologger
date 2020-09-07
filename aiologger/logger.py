@@ -11,7 +11,7 @@ from aiologger.handlers.base import Handler
 from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.levels import LogLevel, check_level
 from aiologger.records import LogRecord
-from aiologger.utils import get_current_frame, create_task
+from aiologger.utils import get_current_frame, create_task, loop_compat
 
 _HandlerFactory = Callable[[], Awaitable[Iterable[Handler]]]
 
@@ -43,6 +43,7 @@ def o_o():
 _srcfile = o_o.__code__.co_filename
 
 
+@loop_compat
 class Logger(Filterer):
     def __init__(self, *, name="aiologger", level=LogLevel.NOTSET) -> None:
         super(Logger, self).__init__()

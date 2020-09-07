@@ -3,7 +3,7 @@ import sys
 from asyncio import AbstractEventLoop, StreamWriter
 from typing import Union, Optional
 
-from aiologger.utils import get_running_loop
+from aiologger.utils import get_running_loop, loop_compat
 from aiologger.filters import Filter
 from aiologger.formatters.base import Formatter
 from aiologger.handlers.base import Handler
@@ -12,6 +12,7 @@ from aiologger.protocols import AiologgerProtocol
 from aiologger.records import LogRecord
 
 
+@loop_compat
 class AsyncStreamHandler(Handler):
     terminator = "\n"
 
