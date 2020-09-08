@@ -11,7 +11,12 @@ from aiologger.handlers.base import Handler
 from aiologger.handlers.streams import AsyncStreamHandler
 from aiologger.levels import LogLevel, check_level
 from aiologger.records import LogRecord
-from aiologger.utils import get_current_frame, create_task, loop_compat
+from aiologger.utils import (
+    get_current_frame,
+    create_task,
+    loop_compat,
+    bind_loop,
+)
 
 _HandlerFactory = Callable[[], Awaitable[Iterable[Handler]]]
 
@@ -67,8 +72,10 @@ class Logger(Filterer):
         **kwargs,
     ):
         self = cls(name=name, level=level, **kwargs)  # type: ignore
+
+        _AsyncStreamHandler = bind_loop(AsyncStreamHandler, kwargs)
         self.add_handler(
-            AsyncStreamHandler(
+            _AsyncStreamHandler(
                 stream=sys.stdout,
                 level=LogLevel.DEBUG,
                 formatter=formatter,
@@ -76,7 +83,7 @@ class Logger(Filterer):
             )
         )
         self.add_handler(
-            AsyncStreamHandler(
+            _AsyncStreamHandler(
                 stream=sys.stderr, level=LogLevel.WARNING, formatter=formatter
             )
         )

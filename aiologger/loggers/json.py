@@ -47,6 +47,7 @@ class JsonLogger(Logger):
         exclude_fields: Iterable[str] = None,
         tz: timezone = None,
         formatter: Optional[Formatter] = None,
+        **kwargs,
     ):
         if formatter is None:
             formatter = ExtendedJsonFormatter(
@@ -59,6 +60,7 @@ class JsonLogger(Logger):
             serializer_kwargs=serializer_kwargs,
             extra=extra,
             formatter=formatter,
+            **kwargs,
         )
 
     def _log(  # type: ignore
