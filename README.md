@@ -73,9 +73,8 @@ async def main():
     logger.critical("critical")
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.run_forever()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Which will output the following lines:
@@ -127,10 +126,8 @@ async def main():
     await logger.shutdown()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.run_forever()
-
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 This code will output the following lines:
@@ -147,6 +144,9 @@ As you might have noticed, the output order **IS NOT GUARANTEED**.
 If some kind of order is important to you, you'll need to use the `await` syntax.
 But thinking about an asyncio application, where every I/O operation is asynchronous,
 this shouldn't really matter.
+
+Also note that logger calls may only be made from an `async def` or from a
+function called with an `async def` somewhere in the callstack.
 
 ## Using aiologger with the async/await syntax
 
@@ -168,9 +168,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 The most basic use case is to log the output into `stdout` and `stderr`.
@@ -214,7 +213,7 @@ logger = Logger.with_default_handlers(name='my-logger')
 
 
 async def main():
-    
+
     await logger.debug("debug at stdout")
     await logger.info("info at stdout")
 
@@ -224,9 +223,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 # Loggers
@@ -260,10 +258,8 @@ async def main():
     await logger.shutdown()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
-
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### JsonLogger Options
@@ -298,9 +294,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ###  Adding content to root
@@ -332,9 +327,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 As a method parameter, only the specific call would add the content to the root.
@@ -356,9 +350,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 **Warning**: It is possible to overwrite keys that are already present at root level.
@@ -377,9 +370,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 #### Extra
@@ -408,9 +400,8 @@ async def main():
     await logger.shutdown()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 It also allows you to override the default root content:
@@ -432,9 +423,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 and it may also be used as an instance attribute:
@@ -456,9 +446,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 
@@ -488,9 +477,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Serializer options
@@ -520,9 +508,8 @@ async def main():
 
     await logger.shutdown()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Would result in a pretty indented output:
@@ -595,6 +582,10 @@ raises an exceptions. To disable the default behaviour, set this
 environment variable to a falsy value `("False", "false", "0")`. Default: `True`
 
 # Compatibility
+
+The explicit passing of a `loop` keyword argument, and subsequent access or a
+`.loop` attribute, has been deprecated and will be removed in version 0.7.0 for
+Loggers and Handlers.
 
 Currently tested only on python 3.6 and 3.7
 
