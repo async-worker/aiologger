@@ -583,7 +583,7 @@ environment variable to a falsy value `("False", "false", "0")`. Default: `True`
 
 # Compatibility
 
-The explicit passing of a `loop` keyword argument, and subsequent access or a
+The explicit passing of a `loop` keyword argument, and subsequent access of a
 `.loop` attribute, has been deprecated and will be removed in version 0.7.0 for
 Loggers and Handlers.
 
