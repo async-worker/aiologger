@@ -1,8 +1,9 @@
-from setuptools import setup, find_packages
 from collections import OrderedDict
-import setuptools
 
-VERSION = "0.5.0"
+import setuptools
+from setuptools import setup, find_packages
+
+VERSION = "0.5.1"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
