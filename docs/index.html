@@ -53,19 +53,26 @@ pipenv run <span class="nb">test</span>
 </pre></div>
 </div>
 </div>
-</div>
 <div class="section" id="dependencies">
-<h1>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h1>
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Python 3.6+</li>
 <li><em>Optional</em>: <a class="reference external" href="https://github.com/Tinche/aiofiles/tree/master/aiofiles">aiofiles</a> is required for file handlers</li>
 </ul>
 </div>
 <div class="section" id="authors-and-license">
-<h1>Authors and License<a class="headerlink" href="#authors-and-license" title="Permalink to this headline">¶</a></h1>
+<h2>Authors and License<a class="headerlink" href="#authors-and-license" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">aiologger</span></code> package is written mostly by <a class="reference external" href="https://github.com/diogommartins">diogommartins</a> and <a class="reference external" href="https://github.com/daltonmatos">daltonmatos</a>.</p>
 <p>It’s <em>MIT</em> licensed and freely available.</p>
 <p>Feel free to improve this package and send a pull request to <a class="reference external" href="https://github.com/B2W-BIT/aiologger">GitHub</a>.</p>
+</div>
+<div class="section" id="a-word-about-async-python-and-files">
+<h2>A word about async, Python and files<a class="headerlink" href="#a-word-about-async-python-and-files" title="Permalink to this headline">¶</a></h2>
+<p>Tldr; <code class="docutils literal notranslate"><span class="pre">aiologger</span></code> is only fully async when logging to stdout/stderr. If you log into files on disk you are not being fully async and will be using Threads.</p>
+<p><code class="docutils literal notranslate"><span class="pre">aiologger</span></code> was created when we realized that there were no async logging libs to use. At the time, Python’s built-in logging infra-structure was fully sync (still is, 3.8 beta is out). That’s why we created aiologger.</p>
+<p>Despite everything (in Linux) being a file descriptor, a Network file descriptor and the stdout/stderr FDs are treated differently from files on disk FDs. This happens because there’s no stable/usable async I/O interface published by the OS to be used by Python (or any other language). That’s why <strong>logging to files is NOT truly async</strong>. <code class="docutils literal notranslate"><span class="pre">aiologger</span></code> implementation of file logging uses <a class="reference external" href="https://github.com/Tinche/aiofiles/tree/master/aiofiles">aiofiles</a>, which uses a Thread Pool to write the data. Keep this in mind when using <code class="docutils literal notranslate"><span class="pre">aiologger</span></code> for file logging.</p>
+<p>Other than that, we hope <code class="docutils literal notranslate"><span class="pre">aiologger</span></code> helps you write fully async apps. :tada: :tada:</p>
+</div>
 </div>
 <div class="section" id="table-of-contents">
 <h1>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h1>
@@ -102,6 +109,7 @@ pipenv run <span class="nb">test</span>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="options.html">Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 </ul>
 </div>
@@ -145,6 +153,7 @@ pipenv run <span class="nb">test</span>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="loggers.html">Loggers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="handlers.html">Handlers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options.html">Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 </ul>
 

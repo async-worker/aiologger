@@ -42,9 +42,9 @@ output.</p>
 <div class="section" id="it-logs-everything">
 <h2>It logs everything<a class="headerlink" href="#it-logs-everything" title="Permalink to this headline">¶</a></h2>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -75,10 +75,10 @@ content that are evaluated at serialization time. All you need to do is
 wrap the callable using <code class="docutils literal notranslate"><span class="pre">CallableWrapper</span></code>:</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">random</span> <span class="k">import</span> <span class="n">randint</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
 
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
-<span class="kn">from</span> <span class="nn">aiologger.utils</span> <span class="k">import</span> <span class="n">CallableWrapper</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.utils</span> <span class="kn">import</span> <span class="n">CallableWrapper</span>
 
 
 <span class="k">def</span> <span class="nf">rand</span><span class="p">():</span>
@@ -117,7 +117,7 @@ as a method parameter and instance attribute.</p>
 dict attributes.</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -140,7 +140,7 @@ dict attributes.</p>
 the root.</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -163,7 +163,7 @@ the root.</p>
 at root level.</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -185,7 +185,7 @@ at root level.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">extra</span></code> parameter allow you to add specific content to root:</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -211,7 +211,7 @@ at root level.</p>
 <p>It also allows you to override the default root content:</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -233,7 +233,7 @@ at root level.</p>
 <p>and it may also be used as an instance attribute:</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -259,8 +259,8 @@ at root level.</p>
 exclude fields from the output message.</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
-<span class="kn">from</span> <span class="nn">aiologger.formatters.json</span> <span class="k">import</span> <span class="n">FUNCTION_NAME_FIELDNAME</span><span class="p">,</span> <span class="n">LOGGED_AT_FIELDNAME</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.formatters.json</span> <span class="kn">import</span> <span class="n">FUNCTION_NAME_FIELDNAME</span><span class="p">,</span> <span class="n">LOGGED_AT_FIELDNAME</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -293,7 +293,7 @@ log method parameter and may be used to pass keyword arguments to the
 <p>For pretty printing the output, you may use the <code class="docutils literal notranslate"><span class="pre">indent</span></code> kwarg. Ex.:</p>
 <div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="k">import</span> <span class="n">JsonLogger</span>
+<span class="kn">from</span> <span class="nn">aiologger.loggers.json</span> <span class="kn">import</span> <span class="n">JsonLogger</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -376,6 +376,7 @@ log method parameter and may be used to pass keyword arguments to the
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="handlers.html">Handlers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="options.html">Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 </ul>
 

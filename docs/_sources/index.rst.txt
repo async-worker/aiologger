@@ -51,13 +51,13 @@ Testing
 
 
 Dependencies
-============
+~~~~~~~~~~~~~
 
 - Python 3.6+
 - *Optional*: aiofiles_ is required for file handlers
 
 Authors and License
-===================
+~~~~~~~~~~~~~~~~~~~~
 
 The ``aiologger`` package is written mostly by diogommartins_ and daltonmatos_.
 
@@ -65,6 +65,17 @@ It's *MIT* licensed and freely available.
 
 Feel free to improve this package and send a pull request to GitHub_.
 
+
+A word about async, Python and files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tldr; ``aiologger`` is only fully async when logging to stdout/stderr. If you log into files on disk you are not being fully async and will be using Threads.
+
+``aiologger`` was created when we realized that there were no async logging libs to use. At the time, Python's built-in logging infra-structure was fully sync (still is, 3.8 beta is out). That's why we created aiologger.
+
+Despite everything (in Linux) being a file descriptor, a Network file descriptor and the stdout/stderr FDs are treated differently from files on disk FDs. This happens because there's no stable/usable async I/O interface published by the OS to be used by Python (or any other language). That's why **logging to files is NOT truly async**. ``aiologger`` implementation of file logging uses aiofiles_, which uses a Thread Pool to write the data. Keep this in mind when using ``aiologger`` for file logging.
+
+Other than that, we hope ``aiologger`` helps you write fully async apps. :tada: :tada:
 
 Table of Contents
 =================
@@ -75,6 +86,7 @@ Table of Contents
    usage
    loggers
    handlers
+   options
    contributing
 
 Indices and tables
@@ -83,4 +95,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
