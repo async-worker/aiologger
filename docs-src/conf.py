@@ -91,7 +91,7 @@ html_theme = "alabaster"
 #
 html_theme_options = {
     "description": "Asynchronous non blocking logging for python and asyncio",
-    "github_user": "B2W-BIT",
+    "github_user": "b2wdigital",
     "github_repo": "aiologger",
     "github_button": True,
     "github_type": "star",
