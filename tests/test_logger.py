@@ -1,29 +1,54 @@
 import asyncio
+import contextlib
 import inspect
-import logging
 import unittest
 import os
-from logging import LogRecord
 from typing import Tuple
 
 import asynctest
-from asynctest import CoroutineMock, Mock, patch, call
+from asynctest import CoroutineMock, Mock, patch, call, ANY
 
+from aiologger.utils import get_running_loop
 from aiologger.filters import StdoutFilter
 from aiologger.handlers.streams import AsyncStreamHandler
+from aiologger.levels import LogLevel
 from aiologger.logger import Logger
+from aiologger.records import LogRecord
+from tests.utils import make_read_pipe_stream_reader
 
 
 class LoggerOutsideEventLoopTest(unittest.TestCase):
     def test_property_loop_always_return_a_running_loop(self):
         logger = Logger(name="mylogger")
-        self.assertIsNotNone(logger.loop)
-        self.assertFalse(logger.loop.is_closed())
-        logger.loop.close()
 
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        self.assertIsNotNone(logger.loop)
-        self.assertFalse(logger.loop.is_closed())
+        # it's not safe to install the loop implictly, callers should use
+        # asynio.run
+        with self.assertRaises(RuntimeError):
+            logger.loop
+
+        # it's not safe to run the loop implictly, callers should use
+        # asynio.run
+        with contextlib.closing(asyncio.get_event_loop()) as loop:
+            with self.assertRaises(RuntimeError):
+                logger.loop
+
+            results = []
+
+            async def get_logger_loop():
+                results.append(logger.loop)
+
+            loop.run_until_complete(get_logger_loop())
+            logger_loop, = results
+
+            # now that the loop was explicitly set and started, we can use it
+            self.assertIs(logger_loop, loop)
+            del logger_loop
+            self.assertFalse(loop.is_closed())
+
+            # now that the loop was explicitly stopped, it's useless to return
+            loop = asyncio.get_event_loop()
+            with self.assertRaises(RuntimeError):
+                logger.loop
 
 
 class LoggerTests(asynctest.TestCase):
@@ -35,8 +60,8 @@ class LoggerTests(asynctest.TestCase):
         patch("aiologger.logger.sys.stdout", self.write_pipe).start()
         patch("aiologger.logger.sys.stderr", self.write_pipe).start()
 
-        self.stream_reader, self.reader_transport = (
-            await self._make_read_pipe_stream_reader()
+        self.stream_reader, self.reader_transport = await make_read_pipe_stream_reader(
+            self.loop, self.read_pipe
         )
 
     def tearDown(self):
@@ -44,17 +69,6 @@ class LoggerTests(asynctest.TestCase):
         self.write_pipe.close()
         self.reader_transport.close()
         patch.stopall()
-
-    async def _make_read_pipe_stream_reader(
-        self
-    ) -> Tuple[asyncio.StreamReader, asyncio.ReadTransport]:
-        reader = asyncio.StreamReader(loop=self.loop)
-        protocol = asyncio.StreamReaderProtocol(reader)
-
-        transport, protocol = await self.loop.connect_read_pipe(
-            lambda: protocol, self.read_pipe
-        )
-        return reader, transport
 
     async def test_init_with_default_handlers_initializes_handlers_for_stdout_and_stderr(
         self
@@ -67,7 +81,7 @@ class LoggerTests(asynctest.TestCase):
             self.assertCountEqual(logger.handlers, handlers)
 
             self.assertCountEqual(
-                [logging.DEBUG, logging.WARNING],
+                [LogLevel.DEBUG, LogLevel.WARNING],
                 [call[1]["level"] for call in handler_init.call_args_list],
             )
 
@@ -97,7 +111,7 @@ class LoggerTests(asynctest.TestCase):
             exc_info=None,
             args=None,
         )
-        await logger.callHandlers(record)
+        await logger.call_handlers(record)
 
         level10_handler.handle.assert_awaited_once_with(record)
         level30_handler.handle.assert_not_awaited()
@@ -116,7 +130,7 @@ class LoggerTests(asynctest.TestCase):
             args=None,
         )
         with self.assertRaises(Exception):
-            await logger.callHandlers(record)
+            await logger.call_handlers(record)
 
     async def test_it_calls_multiple_handlers_if_multiple_handle_matches_are_found_for_record(
         self
@@ -137,7 +151,7 @@ class LoggerTests(asynctest.TestCase):
             args=None,
         )
 
-        await logger.callHandlers(record)
+        await logger.call_handlers(record)
 
         level10_handler.handle.assert_awaited_once_with(record)
         level20_handler.handle.assert_awaited_once_with(record)
@@ -149,7 +163,7 @@ class LoggerTests(asynctest.TestCase):
         with patch.object(
             logger, "filter", return_value=True
         ) as filter, asynctest.patch.object(
-            logger, "callHandlers"
+            logger, "call_handlers"
         ) as callHandlers:
             record = Mock()
             await logger.handle(record)
@@ -159,7 +173,7 @@ class LoggerTests(asynctest.TestCase):
 
     async def test_it_doesnt_calls_handlers_if_logger_is_disabled(self):
         logger = Logger.with_default_handlers()
-        with asynctest.patch.object(logger, "callHandlers") as callHandlers:
+        with asynctest.patch.object(logger, "call_handlers") as callHandlers:
             record = Mock()
             logger.disabled = True
             await logger.handle(record)
@@ -171,7 +185,7 @@ class LoggerTests(asynctest.TestCase):
         with patch.object(
             logger, "filter", return_value=False
         ) as filter, asynctest.patch.object(
-            logger, "callHandlers"
+            logger, "call_handlers"
         ) as callHandlers:
             record = Mock()
             await logger.handle(record)
@@ -241,6 +255,12 @@ class LoggerTests(asynctest.TestCase):
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
+
+    async def test_it_blocks_logs_with_level_lower_than_Logger_level(self):
+        logger = Logger.with_default_handlers(level=LogLevel.CRITICAL)
+        await logger.info("Xablau")
+
+        self.assertEqual(len(self.stream_reader._buffer), 0)
 
     async def test_it_logs_exception_messages(self):
         logger = Logger.with_default_handlers()
@@ -322,7 +342,7 @@ class LoggerTests(asynctest.TestCase):
         logger.handlers[1].close.assert_called_once()
 
     async def test_logger_handlers_are_not_initialized_twice(self):
-        handler = Mock(spec=AsyncStreamHandler, level=logging.DEBUG)
+        handler = Mock(spec=AsyncStreamHandler, level=LogLevel.DEBUG)
         with patch(
             "aiologger.logger.AsyncStreamHandler", return_value=handler
         ) as Handler:
@@ -339,13 +359,13 @@ class LoggerTests(asynctest.TestCase):
                 [
                     call(
                         stream=self.write_pipe,
-                        level=logging.DEBUG,
+                        level=LogLevel.DEBUG,
                         formatter=formatter,
                         filter=StdoutFilter(),
                     ),
                     call(
                         stream=self.write_pipe,
-                        level=logging.WARNING,
+                        level=LogLevel.WARNING,
                         formatter=formatter,
                     ),
                 ]
@@ -360,10 +380,10 @@ class LoggerTests(asynctest.TestCase):
         self.assertIsNone(logger._dummy_task)
 
         with patch.object(
-            logger, "isEnabledFor", return_value=False
+            logger, "is_enabled_for", return_value=False
         ) as isEnabledFor, patch.object(logger, "_dummy_task") as _dummy_task:
             log_task = logger.info("im disabled")
-            isEnabledFor.assert_called_once_with(logging.INFO)
+            isEnabledFor.assert_called_once_with(LogLevel.INFO)
             self.assertEqual(log_task, _dummy_task)
 
     async def test_it_returns_a_log_task_if_logging_is_enabled_for_level(self):
@@ -383,7 +403,66 @@ class LoggerTests(asynctest.TestCase):
         self
     ):
         logger = Logger.with_default_handlers()
-        self.assertIsNone(logger._loop)
+        self.assertIs(logger._loop, get_running_loop())
 
         await logger.info("Xablau")
-        self.assertIsInstance(logger._loop, asyncio.AbstractEventLoop)
+        self.assertIs(logger._loop, get_running_loop())
+
+    def test_find_caller_without_stack_info(self):
+        logger = Logger()
+
+        def caller_function():
+            def log_function():
+                def make_log_task():
+                    return logger.find_caller()
+
+                return make_log_task()
+
+            return log_function()
+
+        caller = caller_function()
+        self.assertEqual(caller, (__file__, ANY, "caller_function", None))
+
+    def test_find_caller_with_stack_info(self):
+        logger = Logger()
+
+        def caller_function():
+            def log_function():
+                def make_log_task():
+                    try:
+                        raise ValueError("Xablau!")
+                    except Exception:
+                        return logger.find_caller(True)
+
+                return make_log_task()
+
+            return log_function()
+
+        caller = caller_function()
+
+        self.assertEqual(caller.filename, __file__)
+        self.assertEqual(caller.function_name, "caller_function")
+        self.assertIn("return log_function()", caller.stack)
+
+    def test_find_caller_without_current_frame_code(self):
+        logger = Logger()
+
+        with patch(
+            "aiologger.logger.get_current_frame",
+            return_value=Mock(f_back=object()),
+        ):
+            caller = logger.find_caller()
+
+        self.assertEqual(caller.filename, "(unknown file)")
+        self.assertEqual(caller.line_number, 0)
+        self.assertEqual(caller.function_name, "(unknown function)")
+        self.assertIsNone(caller.stack)
+
+    def test_removehandler_removes_handler_if_handler_in_handlers(self):
+        logger = Logger()
+        handler = Mock()
+
+        logger.handlers = [handler]
+
+        logger.remove_handler(handler)
+        self.assertEqual(logger.handlers, [])

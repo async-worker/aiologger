@@ -167,3 +167,6 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
+
+# vim swap files
+.*.sw?
