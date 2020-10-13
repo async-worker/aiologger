@@ -87,6 +87,7 @@ Table of Contents
    loggers
    handlers
    options
+   compatibility
    contributing
 
 Indices and tables
