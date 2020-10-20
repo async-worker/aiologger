@@ -25,7 +25,7 @@ orjson = "==3.4.0"
 python_version = "3.6"
 
 [scripts]
-test = "py.test -v --cov=./aiologger --cov-report term-missing -v"
+test = "py.test -v --cov=./aiologger --cov-report=term-missing -v --cov-report=xml"
 lint = "mypy ./ --ignore-missing-imports"
 fmt = "black --py36 -v --line-length 80 ."
 fmt-check = "black --py36 -v --line-length 80 --check ."
