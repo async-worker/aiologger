@@ -1,0 +1,16 @@
+categories:
+  - title: 'Mudanças incompatíveis'
+    label: 'breaking-change'
+  - title: 'Bugs Resolvidos'
+    label: 'bug'
+  - title: 'Novas Features'
+    label: 'feature'
+  - title: 'Documentação'
+    label: 'docs'
+change-template: '- #$NUMBER $TITLE (@$AUTHOR)'
+template: |
+  ## Changelog
+
+  $CHANGES
+
+  Docs: https://b2wdigital.github.io/aiologger/
