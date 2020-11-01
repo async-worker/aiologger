@@ -72,7 +72,7 @@ class LogRecord:
                     f"Invalid LogRecord args type: {type(args[0])}. "
                     f"Expected Mapping"
                 )
-            self.args: Optional[Mapping] = args[0]
+            self.args = args[0]
         else:
             self.args = args
         self.levelname = get_level_name(level)
