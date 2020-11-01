@@ -8,9 +8,21 @@ categories:
   - title: 'Documentação'
     label: 'docs'
 change-template: '- #$NUMBER $TITLE (@$AUTHOR)'
+version-resolver:
+  minor:
+    labels:
+      - 'breaking-change'
+  patch:
+    labels:
+      - 'feature'
+      - 'bug'
+  default: patch
 template: |
   ## Changelog
 
   $CHANGES
 
   Docs: https://b2wdigital.github.io/aiologger/
+
+  Commits: https://github.com/b2wdigital/aiologger/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+  Tag: https://github.com/b2wdigital/aiologger/releases/tag/$RESOLVED_VERSION
