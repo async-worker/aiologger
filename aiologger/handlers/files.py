@@ -171,7 +171,7 @@ class RolloverInterval(str, enum.Enum):
     MONDAYS = "W0"
     TUESDAYS = "W1"
     WEDNESDAYS = "W2"
-    THUERDAYS = "W3"
+    THURSDAYS = "W3"
     FRIDAYS = "W4"
     SATURDAYS = "W5"
     SUNDAYS = "W6"
@@ -183,7 +183,7 @@ class RolloverInterval(str, enum.Enum):
             cls.MONDAYS,
             cls.TUESDAYS,
             cls.WEDNESDAYS,
-            cls.THUERDAYS,
+            cls.THURSDAYS,
             cls.FRIDAYS,
             cls.SATURDAYS,
             cls.SUNDAYS,
@@ -213,7 +213,7 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
     | MONDAYS    | rotation happens every WEEK on MONDAY at ${at_time}    |
     | TUESDAYS   | rotation happens every WEEK on TUESDAY at ${at_time}   |
     | WEDNESDAYS | rotation happens every WEEK on WEDNESDAY at ${at_time} |
-    | THUERDAYS  | rotation happens every WEEK on THUERDAY at ${at_time}  |
+    | THURSDAYS  | rotation happens every WEEK on THURSDAY at ${at_time}  |
     | FRIDAYS    | rotation happens every WEEK on FRIDAY at ${at_time}    |
     | SATURDAYS  | rotation happens every WEEK on SATURDAY at ${at_time}  |
     | SUNDAYS    | rotation happens every WEEK on SUNDAY at ${at_time}    |
