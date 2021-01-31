@@ -9,9 +9,9 @@
 
 # About the Project
 
-The builtin python logger is I/O blocking. This means that using the builtin
-`logging` module will interfere with your asynchronouns application performance.
-`aiologger` aims to be the standard Asynchronous non blocking logging for
+The built-in python logger is I/O blocking. This means that using the built-in
+`logging` module will interfere with your asynchronous application performance.
+`aiologger` aims to be the standard Asynchronous non-blocking logging for
 python and asyncio.
 
 
