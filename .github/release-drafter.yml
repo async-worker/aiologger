@@ -20,7 +20,7 @@ version-resolver:
 template: |
   ## Changelog
 
-  $CHANGES
+  $CHANGES for $RESOLVED_VERSION
 
   Docs: https://b2wdigital.github.io/aiologger/
 
