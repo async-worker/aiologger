@@ -18,9 +18,9 @@ version-resolver:
       - 'bug'
   default: patch
 template: |
-  ## Changelog
+  ## Changelog for $RESOLVED_VERSION
 
-  $CHANGES for $RESOLVED_VERSION
+  $CHANGES
 
   Docs: https://b2wdigital.github.io/aiologger/
 
