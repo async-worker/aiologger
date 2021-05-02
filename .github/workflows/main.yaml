@@ -1,7 +1,9 @@
-name: pull-request
+name: main
 
-on: pull_request
-
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   tests:
@@ -12,9 +14,8 @@ jobs:
       matrix:
         python: [3.6, 3.7, 3.8, 3.9, 3.x]
     steps:
-      - name: install {libxml2,libxslt}-dev
+      - name: install libxml2-dev
         run: sudo apt-get install libxml2-dev libxslt-dev
-
       - name: checkout
         uses: actions/checkout@v2
 
@@ -26,22 +27,20 @@ jobs:
       - name: Install pip/pipenv
         run: pip install -U pip==20.2.3 pipenv==2020.8.13
 
-      - name: Install aiologer
+      - name: pipenv install --dev
         run: pipenv install --system --deploy --ignore-pipfile --dev
 
       - name: pipenv run test
-        run: pipenv run test
+        run: pipenv run all-tests
 
       - name: Coverage upload
         if: ${{matrix.python == '3.8'}}
         uses: paambaati/codeclimate-action@v2.7.5
         env:
           CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
-
       - name: Coverage Skipped
         if: ${{matrix.python != '3.8'}}
         run: echo "Coverage uploaded only on python 3.8 run"
-
 
   lint:
     name: lint
@@ -50,37 +49,19 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
 
-      - name: Install python 3.7
+      - name: Install python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Install pip/pipenv
         run: pip install -U pip==20.2.3 pipenv==2020.8.13
 
-      - name: Install aiologer
+      - name: pipenv install --dev
         run: pipenv install --system --deploy --ignore-pipfile --dev
 
       - name: pipenv run lint
         run: pipenv run lint
-
-  fmt-check:
-    name: fmt-check
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v2
-
-      - name: Install python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Install pip/pipenv
-        run: pip install -U pip==20.2.3 pipenv==2020.8.13
-
-      - name: Install aiologer
-        run: pipenv install --system --deploy --ignore-pipfile --dev
 
       - name: pipenv run fmt-check
         run: pipenv run fmt-check

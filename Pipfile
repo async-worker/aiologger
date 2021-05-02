@@ -8,7 +8,6 @@ name = "pypi"
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
-codecov = "*"
 asynctest = "==0.12.0"
 freezegun = "==0.3.10"
 mypy = "==0.711"
