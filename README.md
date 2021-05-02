@@ -2,8 +2,9 @@
 
 [![PYPI](https://img.shields.io/pypi/v/aiologger.svg)](http://pypi.python.org/pypi/aiologger)
 [![PYPI Python Versions](https://img.shields.io/pypi/pyversions/aiologger.svg)](http://pypi.python.org/pypi/aiologger)
-[![Build Status](https://travis-ci.org/b2wdigital/aiologger.svg?branch=master)](https://travis-ci.org/b2wdigital/aiologger)
-[![codecov](https://codecov.io/gh/b2wdigital/aiologger/branch/master/graph/badge.svg)](https://codecov.io/gh/b2wdigital/aiologger)
+[![Build Status](https://github.com/async-worker/aiologger/actions/workflows/main.yaml/badge.svg?branch=main)](https://github.com/async-worker/aiologger/actions/workflows/main.yaml)
+[![Maintainability](https://api.codeclimate.com/v1/badges/122a3696a749ed04a972/maintainability)](https://codeclimate.com/github/async-worker/aiologger/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/122a3696a749ed04a972/test_coverage)](https://codeclimate.com/github/async-worker/aiologger/test_coverage)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
@@ -17,4 +18,4 @@ python and asyncio.
 
 # Documentation
 
-The project documentation can be found here: https://b2wdigital.github.io/aiologger
+The project documentation can be found here: https://async-worker.github.io/aiologger/
