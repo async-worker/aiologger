@@ -30,7 +30,7 @@ Asynchronous non blocking logging for python and asyncio.
 .. _GitHub: https://github.com/B2W-BIT/aiologger
 .. _diogommartins: https://github.com/diogommartins
 .. _daltonmatos: https://github.com/daltonmatos
-.. _aiofiles: https://github.com/Tinche/aiofiles/tree/master/aiofiles
+.. _aiofiles: https://github.com/Tinche/aiofiles
 
 
 
