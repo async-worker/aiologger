@@ -202,14 +202,14 @@ class JsonLoggerTests(asynctest.TestCase):
         await self.logger.info("Music", extra=extra)
         logged_content = json.loads(await self.stream_reader.readline())
 
-        self.assertDictContainsSubset(extra, logged_content)
+        self.assertEqual(dict(logged_content, **extra), logged_content)
 
     async def test_flatten_param_adds_message_to_document_root(self):
         message = {"artist": "Dave Meniketti", "song": "Loan me a dime"}
         await self.logger.info(message, flatten=True)
         logged_content = json.loads(await self.stream_reader.readline())
 
-        self.assertDictContainsSubset(message, logged_content)
+        self.assertEqual(dict(logged_content, **message), logged_content)
 
     async def test_flatten_method_parameter_overwrites_default_attributes(self):
         message = {"logged_at": "Yesterday"}
@@ -236,7 +236,7 @@ class JsonLoggerTests(asynctest.TestCase):
         await self.logger.info(message)
         logged_content = json.loads(await self.stream_reader.readline())
 
-        self.assertDictContainsSubset(message, logged_content)
+        self.assertEqual(dict(logged_content, **message), logged_content)
 
     async def test_flatten_instance_attr_overwrites_default_attributes(self):
         self.logger.flatten = True
