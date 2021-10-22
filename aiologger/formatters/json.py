@@ -11,15 +11,17 @@ from aiologger.records import LogRecord, ExtendedLogRecord
 from aiologger.utils import CallableWrapper
 
 
-LOGGED_AT_FIELDNAME = "logged_at"
-LINE_NUMBER_FIELDNAME = "line_number"
-FUNCTION_NAME_FIELDNAME = "function"
-LOG_LEVEL_FIELDNAME = "level"
-MSG_FIELDNAME = "msg"
-FILE_PATH_FIELDNAME = "file_path"
 
 
 class JsonFormatter(Formatter):
+
+    LOGGED_AT_FIELDNAME = "logged_at"
+    LINE_NUMBER_FIELDNAME = "line_number"
+    FUNCTION_NAME_FIELDNAME = "function"
+    LOG_LEVEL_FIELDNAME = "level"
+    MSG_FIELDNAME = "msg"
+    FILE_PATH_FIELDNAME = "file_path"
+
     def __init__(
         self,
         serializer: Callable[..., str] = json.dumps,
@@ -27,7 +29,10 @@ class JsonFormatter(Formatter):
     ) -> None:
         super(JsonFormatter, self).__init__()
         self.serializer = serializer
-        self.default_msg_fieldname = default_msg_fieldname or MSG_FIELDNAME
+        self.default_msg_fieldname = (
+            default_msg_fieldname
+            or self.MSG_FIELDNAME
+        )
 
     def _default_handler(self, obj):
         if isinstance(obj, datetime):
@@ -70,13 +75,13 @@ class JsonFormatter(Formatter):
             traceback_info = None
         return {
             "record": {
-                LINE_NUMBER_FIELDNAME: record.lineno,
-                LOG_LEVEL_FIELDNAME: record.levelname,
-                FILE_PATH_FIELDNAME: record.filename,
-                FUNCTION_NAME_FIELDNAME: record.funcName,
-                MSG_FIELDNAME: str(record.msg),
+                cls.LINE_NUMBER_FIELDNAME: record.lineno,
+                cls.LOG_LEVEL_FIELDNAME: record.levelname,
+                cls.FILE_PATH_FIELDNAME: record.filename,
+                cls.FUNCTION_NAME_FIELDNAME: record.funcName,
+                cls.MSG_FIELDNAME: str(record.msg),
             },
-            LOGGED_AT_FIELDNAME: datetime.utcnow().isoformat(),
+            cls.LOGGED_AT_FIELDNAME: datetime.utcnow().isoformat(),
             "logger_exception": {
                 "type": str(type(exception)),
                 "exc": str(exception),
@@ -117,15 +122,6 @@ class JsonFormatter(Formatter):
 
 class ExtendedJsonFormatter(JsonFormatter):
     level_to_name_mapping = LEVEL_TO_NAME
-    default_fields = frozenset(
-        [
-            LOG_LEVEL_FIELDNAME,
-            LOGGED_AT_FIELDNAME,
-            LINE_NUMBER_FIELDNAME,
-            FUNCTION_NAME_FIELDNAME,
-            FILE_PATH_FIELDNAME,
-        ]
-    )
 
     def __init__(
         self,
@@ -138,11 +134,20 @@ class ExtendedJsonFormatter(JsonFormatter):
         super(ExtendedJsonFormatter, self).__init__(
             serializer=serializer, default_msg_fieldname=default_msg_fieldname
         )
+        default_fields = frozenset(
+            [
+                self.LOG_LEVEL_FIELDNAME,
+                self.LOGGED_AT_FIELDNAME,
+                self.LINE_NUMBER_FIELDNAME,
+                self.FUNCTION_NAME_FIELDNAME,
+                self.FILE_PATH_FIELDNAME,
+            ]
+        )
         self.tz = tz
         if exclude_fields is None:
-            self.log_fields = self.default_fields
+            self.log_fields = default_fields
         else:
-            self.log_fields = self.default_fields - set(exclude_fields)
+            self.log_fields = default_fields - set(exclude_fields)
 
     def formatter_fields_for_record(self, record: LogRecord):
         """
@@ -153,11 +158,11 @@ class ExtendedJsonFormatter(JsonFormatter):
         )
 
         default_fields = (
-            (LOGGED_AT_FIELDNAME, datetime_serialized),
-            (LINE_NUMBER_FIELDNAME, record.lineno),
-            (FUNCTION_NAME_FIELDNAME, record.funcName),
-            (LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),
-            (FILE_PATH_FIELDNAME, record.pathname),
+            (self.LOGGED_AT_FIELDNAME, datetime_serialized),
+            (self.LINE_NUMBER_FIELDNAME, record.lineno),
+            (self.FUNCTION_NAME_FIELDNAME, record.funcName),
+            (self.LOG_LEVEL_FIELDNAME, self.level_to_name_mapping[record.levelno]),
+            (self.FILE_PATH_FIELDNAME, record.pathname),
         )
 
         for field, value in default_fields:
@@ -172,7 +177,7 @@ class ExtendedJsonFormatter(JsonFormatter):
         if record.flatten and isinstance(record.msg, dict):
             msg.update(record.msg)
         else:
-            msg[MSG_FIELDNAME] = record.msg
+            msg[self.default_msg_fieldname] = record.msg
 
         if record.extra:
             msg.update(record.extra)
@@ -182,3 +187,14 @@ class ExtendedJsonFormatter(JsonFormatter):
             msg["exc_text"] = record.exc_text
 
         return self._serializer_ensure_str(msg=msg, record=record)
+
+
+class ECSExtendedJsonFormatter(ExtendedJsonFormatter):
+    """JSON formatter compliant with Elastic Common Schema"""
+
+    LOGGED_AT_FIELDNAME = "@timestamp"
+    LINE_NUMBER_FIELDNAME = "log.origin.file.line"
+    FUNCTION_NAME_FIELDNAME = "log.origin.function"
+    LOG_LEVEL_FIELDNAME = "log.level"
+    MSG_FIELDNAME = "message"
+    FILE_PATH_FIELDNAME = "log.origin.file.name"

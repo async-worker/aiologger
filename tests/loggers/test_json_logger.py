@@ -10,10 +10,7 @@ from asynctest import CoroutineMock
 from aiologger.levels import LogLevel
 from aiologger.loggers.json import JsonLogger
 from aiologger.records import ExtendedLogRecord
-from aiologger.formatters.json import (
-    FUNCTION_NAME_FIELDNAME,
-    LOG_LEVEL_FIELDNAME,
-)
+from aiologger.formatters.json import JsonFormatter
 from aiologger.utils import CallableWrapper
 from freezegun import freeze_time
 
@@ -331,11 +328,20 @@ class JsonLoggerTests(asynctest.TestCase):
     async def test_default_fields_are_excludeable(self):
         logger = JsonLogger.with_default_handlers(
             level=10,
-            exclude_fields=[FUNCTION_NAME_FIELDNAME, LOG_LEVEL_FIELDNAME],
+            exclude_fields=[
+                JsonFormatter.FUNCTION_NAME_FIELDNAME,
+                JsonFormatter.LOG_LEVEL_FIELDNAME
+            ],
         )
 
         await logger.info("Xablau")
         logged_content = json.loads(await self.stream_reader.readline())
 
-        self.assertNotIn(FUNCTION_NAME_FIELDNAME, logged_content)
-        self.assertNotIn(LOG_LEVEL_FIELDNAME, logged_content)
+        self.assertNotIn(
+            JsonFormatter.FUNCTION_NAME_FIELDNAME,
+            logged_content,
+        )
+        self.assertNotIn(
+            JsonFormatter.LOG_LEVEL_FIELDNAME,
+            logged_content,
+        )
