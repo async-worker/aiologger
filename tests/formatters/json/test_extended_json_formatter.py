@@ -6,11 +6,7 @@ from unittest.mock import patch, ANY
 
 from freezegun import freeze_time
 
-from aiologger.formatters.json import (
-    ExtendedJsonFormatter,
-    LOG_LEVEL_FIELDNAME,
-    LINE_NUMBER_FIELDNAME,
-)
+from aiologger.formatters.json import ExtendedJsonFormatter
 from aiologger.records import ExtendedLogRecord
 
 
@@ -35,15 +31,28 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         self
     ):
         formatter = ExtendedJsonFormatter()
-        self.assertEqual(
-            ExtendedJsonFormatter.default_fields, formatter.log_fields
+        self.assertSetEqual(
+            formatter.log_fields,
+            {
+                ExtendedJsonFormatter.LOG_LEVEL_FIELDNAME,
+                ExtendedJsonFormatter.LOGGED_AT_FIELDNAME,
+                ExtendedJsonFormatter.LINE_NUMBER_FIELDNAME,
+                ExtendedJsonFormatter.FUNCTION_NAME_FIELDNAME,
+                ExtendedJsonFormatter.FILE_PATH_FIELDNAME,
+            }
         )
+
 
     def test_default_log_fields_can_be_excluded_with_exclude_fields_initialization_argument(
         self
     ):
-        formatter = ExtendedJsonFormatter(exclude_fields=(LOG_LEVEL_FIELDNAME,))
-        self.assertNotIn(LOG_LEVEL_FIELDNAME, formatter.log_fields)
+        formatter = ExtendedJsonFormatter(
+            exclude_fields=(ExtendedJsonFormatter.LOG_LEVEL_FIELDNAME,)
+        )
+        self.assertNotIn(
+            ExtendedJsonFormatter.LOG_LEVEL_FIELDNAME,
+            formatter.log_fields,
+        )
 
     def test_formatter_fields_for_record_with_default_fields(self):
         result = dict(self.formatter.formatter_fields_for_record(self.record))
@@ -115,7 +124,10 @@ class ExtendedJsonFormatterTests(unittest.TestCase):
         )
 
     def test_formatter_fields_for_record_with_excluded_fields(self):
-        log_fields = {LOG_LEVEL_FIELDNAME, LINE_NUMBER_FIELDNAME}
+        log_fields = {
+            ExtendedJsonFormatter.LOG_LEVEL_FIELDNAME,
+            ExtendedJsonFormatter.LINE_NUMBER_FIELDNAME,
+        }
 
         with patch.object(self.formatter, "log_fields", log_fields):
             result = dict(
