@@ -5,7 +5,7 @@ import os
 import time
 import types
 from collections.abc import Mapping
-from typing import Optional, Tuple, Type
+from typing import Optional, Tuple, Type, Union
 
 from aiologger.levels import LogLevel, get_level_name
 
@@ -32,7 +32,7 @@ class LogRecord:
         pathname: str,
         lineno: int,
         msg,
-        args: Optional[Tuple[Mapping]] = None,
+        args: Optional[Tuple] = None,
         exc_info: Optional[ExceptionInfo] = None,
         func: Optional[str] = None,
         sinfo: Optional[str] = None,
@@ -65,13 +65,8 @@ class LogRecord:
         created_at = time.time()
         self.name = name
         self.msg = msg
-        self.args: Optional[Mapping]
-        if args:
-            if len(args) != 1 or not isinstance(args[0], Mapping):
-                raise ValueError(
-                    f"Invalid LogRecord args type: {type(args[0])}. "
-                    f"Expected Mapping"
-                )
+        self.args: Optional[Union[Mapping, Tuple]]
+        if args and len(args) == 1 and isinstance(args[0], Mapping) and args[0]:
             self.args = args[0]
         else:
             self.args = args
