@@ -347,10 +347,7 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
         with freeze_time("2019-01-20 20:22:49") as frozen_datetime:
             with patch(
                 "aiologger.handlers.files.os.stat",
-                return_value=Mock(
-                    st_mtime=frozen_datetime.time_to_freeze.timestamp()
-                    - time.altzone
-                ),
+                return_value=Mock(st_mtime=time.time()),
             ), patch("aiologger.handlers.files.os.unlink") as unlink:
                 new_file_path = f"{self.temp_file.name}.2019-01-20_20-22-49"
                 os.open(new_file_path, os.O_CREAT)
