@@ -409,11 +409,8 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
 
     async def _delete_files(self, file_paths: List[str]):
         loop = get_running_loop()
-        delete_tasks = (
-            loop.run_in_executor(None, lambda: os.unlink(file_path))
-            for file_path in file_paths
-        )
-        await asyncio.gather(*delete_tasks)
+        for file_path in file_paths:
+            await loop.run_in_executor(None, lambda: os.unlink(file_path))
 
     async def do_rollover(self):
         """
