@@ -1,19 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Usage &#8212; aiologger 0.3.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Loggers" href="loggers.html" />
@@ -34,7 +33,7 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="usage">
+  <section id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">aiologger</span></code> implements two different interfaces that you can use to
 generate your logs. You can generate your logs using the <code class="docutils literal notranslate"><span class="pre">async/await</span></code>
@@ -42,15 +41,15 @@ syntax or, if you for any reason can’t (or don’t want to) change all
 your codebase to use this syntax you can use aiologger as if it were
 synchronous, but behind the scenes your logs will be generated
 asynchronously.</p>
-<div class="section" id="migrating-from-standard-lib-logging">
+<section id="migrating-from-standard-lib-logging">
 <h2>Migrating from standard lib logging<a class="headerlink" href="#migrating-from-standard-lib-logging" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="using-aiologger-with-the-standard-syntax">
+<section id="using-aiologger-with-the-standard-syntax">
 <h3>Using aiologger with the standard syntax<a class="headerlink" href="#using-aiologger-with-the-standard-syntax" title="Permalink to this headline">¶</a></h3>
 <p>If you prefer not to use the <code class="docutils literal notranslate"><span class="pre">async/await</span></code> all you need to do is to
 replace you logger instance with an instance of <code class="docutils literal notranslate"><span class="pre">aiologger.Logger</span></code>.
 For now on you can call <code class="docutils literal notranslate"><span class="pre">logger.info()</span></code> the same way you are
 (probably) already calling. Here is a simple example:</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
@@ -85,20 +84,20 @@ For now on you can call <code class="docutils literal notranslate"><span class="
 <p>If you want to generate all your logs asynchronously, you just have to
 change the instance of the <code class="docutils literal notranslate"><span class="pre">logger</span></code> object. To do that, all we need to
 change those lines from:</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>to:</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiologger</span> <span class="kn">import</span> <span class="n">Logger</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiologger</span> <span class="kn">import</span> <span class="n">Logger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">Logger</span><span class="o">.</span><span class="n">with_default_handlers</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>and here is the complete example, generating all log lines
 asynchronously.</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">aiologger</span> <span class="kn">import</span> <span class="n">Logger</span>
 
 
@@ -132,10 +131,10 @@ asynchronously.</p>
 some kind of order is important to you, you’ll need to use the <code class="docutils literal notranslate"><span class="pre">await</span></code>
 syntax. But thinking about an asyncio application, where every I/O
 operation is asynchronous, this shouldn’t really matter.</p>
-</div>
-<div class="section" id="using-aiologger-with-the-async-await-syntax">
+</section>
+<section id="using-aiologger-with-the-async-await-syntax">
 <h3>Using aiologger with the async/await syntax<a class="headerlink" href="#using-aiologger-with-the-async-await-syntax" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">aiologger</span> <span class="kn">import</span> <span class="n">Logger</span>
 
 
@@ -160,10 +159,10 @@ operation is asynchronous, this shouldn’t really matter.</p>
 <code class="docutils literal notranslate"><span class="pre">stderr</span></code>. Using <code class="docutils literal notranslate"><span class="pre">Logger.with_default_handlers</span></code> you’re able to
 effortlessly create a new <code class="docutils literal notranslate"><span class="pre">Logger</span></code> instance with 2 distinct handlers:</p>
 <ul class="simple">
-<li>One for handling <code class="docutils literal notranslate"><span class="pre">debug</span></code> and <code class="docutils literal notranslate"><span class="pre">info</span></code> methods and writing to
-<code class="docutils literal notranslate"><span class="pre">stdout</span></code>;</li>
-<li>The other, for handling <code class="docutils literal notranslate"><span class="pre">warning</span></code>, <code class="docutils literal notranslate"><span class="pre">critical</span></code>, <code class="docutils literal notranslate"><span class="pre">exception</span></code> and
-<code class="docutils literal notranslate"><span class="pre">error</span></code> methods and writing to <code class="docutils literal notranslate"><span class="pre">stderr</span></code>.</li>
+<li><p>One for handling <code class="docutils literal notranslate"><span class="pre">debug</span></code> and <code class="docutils literal notranslate"><span class="pre">info</span></code> methods and writing to
+<code class="docutils literal notranslate"><span class="pre">stdout</span></code>;</p></li>
+<li><p>The other, for handling <code class="docutils literal notranslate"><span class="pre">warning</span></code>, <code class="docutils literal notranslate"><span class="pre">critical</span></code>, <code class="docutils literal notranslate"><span class="pre">exception</span></code> and
+<code class="docutils literal notranslate"><span class="pre">error</span></code> methods and writing to <code class="docutils literal notranslate"><span class="pre">stderr</span></code>.</p></li>
 </ul>
 <p>Since everything is asynchronous, this means that for the same handler,
 the output order is guaranteed, but not between distinct handlers. The
@@ -178,18 +177,18 @@ above code may output the following:</p>
 <p>You may notice that the order between the same handler is guaranteed.
 E.g.:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">at</span> <span class="pre">stdout</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">info</span> <span class="pre">at</span> <span class="pre">stdout</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">warning</span> <span class="pre">at</span> <span class="pre">stderr</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">error</span> <span class="pre">at</span> <span class="pre">stderr</span></code></li>
-<li>between lines of distinct handlers, the order isn’t guaranteed.
-<code class="docutils literal notranslate"><span class="pre">warning</span> <span class="pre">at</span> <span class="pre">stderr</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">at</span> <span class="pre">stdout</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">at</span> <span class="pre">stdout</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">info</span> <span class="pre">at</span> <span class="pre">stdout</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">warning</span> <span class="pre">at</span> <span class="pre">stderr</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">error</span> <span class="pre">at</span> <span class="pre">stderr</span></code></p></li>
+<li><p>between lines of distinct handlers, the order isn’t guaranteed.
+<code class="docutils literal notranslate"><span class="pre">warning</span> <span class="pre">at</span> <span class="pre">stderr</span></code> was outputted before <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">at</span> <span class="pre">stdout</span></code></p></li>
 </ul>
-</div>
-<div class="section" id="lazy-initialization">
+</section>
+<section id="lazy-initialization">
 <h3>Lazy initialization<a class="headerlink" href="#lazy-initialization" title="Permalink to this headline">¶</a></h3>
 <p>Since the actual stream initialization only happens on the first log
 call, it’s possible to initialize <code class="docutils literal notranslate"><span class="pre">aiologger.Logger</span></code> instances outside
 a running event loop:</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">aiologger</span> <span class="kn">import</span> <span class="n">Logger</span>
 
 
@@ -210,9 +209,9 @@ a running event loop:</p>
 <span class="n">loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
           </div>
@@ -267,17 +266,15 @@ a running event loop:</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -294,7 +291,7 @@ a running event loop:</p>
       &copy;2019, aiologger contributors.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
