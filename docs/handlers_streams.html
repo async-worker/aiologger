@@ -1,19 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Streams &#8212; aiologger 0.3.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Files" href="handlers_files.html" />
@@ -34,9 +33,9 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-aiologger.handlers.streams">
+  <section id="module-aiologger.handlers.streams">
 <span id="streams"></span><h1>Streams<a class="headerlink" href="#module-aiologger.handlers.streams" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="asyncstreamhandler">
+<section id="asyncstreamhandler">
 <h2>AsyncStreamHandler<a class="headerlink" href="#asyncstreamhandler" title="Permalink to this headline">¶</a></h2>
 <p>A handler class for writing logs into a stream which may be
 <code class="docutils literal notranslate"><span class="pre">sys.stdout</span></code> or <code class="docutils literal notranslate"><span class="pre">sys.stderr</span></code>. If a stream isn’t provided, it
@@ -44,7 +43,7 @@ defaults to <code class="docutils literal notranslate"><span class="pre">sys.std
 <code class="docutils literal notranslate"><span class="pre">logging.NOTSET</span></code> is used. If <code class="docutils literal notranslate"><span class="pre">formatter</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code>, it is used
 to format the log record before <code class="docutils literal notranslate"><span class="pre">emit()</span></code> gets called. A <code class="docutils literal notranslate"><span class="pre">filter</span></code> may
 be used to filter log records</p>
-<div class="code python highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">aiologger.handlers.streams</span> <span class="kn">import</span> <span class="n">AsyncStreamHandler</span>
 
 
@@ -52,8 +51,8 @@ be used to filter log records</p>
 </pre></div>
 </div>
 <p>It also accepts a level, formatter and filter at the initialization.</p>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -109,17 +108,15 @@ be used to filter log records</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -136,7 +133,7 @@ be used to filter log records</p>
       &copy;2019, aiologger contributors.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
