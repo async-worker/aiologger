@@ -22,7 +22,7 @@ template: |
 
   $CHANGES
 
-  Docs: https://b2wdigital.github.io/aiologger/
+  Docs: https://github.com/async-worker/aiologger/
 
-  Commits: https://github.com/b2wdigital/aiologger/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
-  Tag: https://github.com/b2wdigital/aiologger/releases/tag/$RESOLVED_VERSION
+  Commits: https://github.com/async-worker/aiologger/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+  Tag: https://github.com/async-worker/aiologger/releases/tag/$RESOLVED_VERSION
