@@ -17,40 +17,6 @@ from aiologger.records import LogRecord
 from tests.utils import make_read_pipe_stream_reader
 
 
-class LoggerOutsideEventLoopTest(unittest.TestCase):
-    def test_property_loop_always_return_a_running_loop(self):
-        logger = Logger(name="mylogger")
-
-        # it's not safe to install the loop implictly, callers should use
-        # asynio.run
-        with self.assertRaises(RuntimeError):
-            logger.loop
-
-        # it's not safe to run the loop implictly, callers should use
-        # asynio.run
-        with contextlib.closing(asyncio.get_event_loop()) as loop:
-            with self.assertRaises(RuntimeError):
-                logger.loop
-
-            results = []
-
-            async def get_logger_loop():
-                results.append(logger.loop)
-
-            loop.run_until_complete(get_logger_loop())
-            logger_loop, = results
-
-            # now that the loop was explicitly set and started, we can use it
-            self.assertIs(logger_loop, loop)
-            del logger_loop
-            self.assertFalse(loop.is_closed())
-
-            # now that the loop was explicitly stopped, it's useless to return
-            loop = asyncio.get_event_loop()
-            with self.assertRaises(RuntimeError):
-                logger.loop
-
-
 class LoggerTests(asynctest.TestCase):
     async def setUp(self):
         r_fileno, w_fileno = os.pipe()
@@ -77,7 +43,7 @@ class LoggerTests(asynctest.TestCase):
         with asynctest.patch(
             "aiologger.logger.AsyncStreamHandler", side_effect=handlers
         ) as handler_init:
-            logger = Logger.with_default_handlers(loop=self.loop)
+            logger = Logger.with_default_handlers()
             self.assertCountEqual(logger.handlers, handlers)
 
             self.assertCountEqual(
@@ -398,15 +364,6 @@ class LoggerTests(asynctest.TestCase):
 
         logged_content = await self.stream_reader.readline()
         self.assertEqual(logged_content, b"Xablau\n")
-
-    async def test_it_only_keeps_a_reference_to_the_loop_after_the_first_log_call(
-        self
-    ):
-        logger = Logger.with_default_handlers()
-        self.assertIs(logger._loop, get_running_loop())
-
-        await logger.info("Xablau")
-        self.assertIs(logger._loop, get_running_loop())
 
     def test_find_caller_without_stack_info(self):
         logger = Logger()

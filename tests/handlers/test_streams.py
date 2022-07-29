@@ -37,10 +37,7 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         stream = Mock()
         formatter = Mock()
         filter = Mock()
-        loop = Mock()
-        handler = AsyncStreamHandler(
-            stream, level, formatter, filter, loop=loop
-        )
+        handler = AsyncStreamHandler(stream, level, formatter, filter)
 
         self.assertIsInstance(handler, AsyncStreamHandler)
 
@@ -48,14 +45,6 @@ class AsyncStreamHandlerTests(asynctest.TestCase):
         self.assertEqual(handler.formatter, formatter)
         self.assertEqual(handler.stream, stream)
         self.assertIn(filter, handler.filters)
-        self.assertEqual(handler.loop, loop)
-
-    async def test_init_gets_the_running_event_loop(self):
-        handler = AsyncStreamHandler(
-            stream=self.write_pipe, level=10, formatter=Mock()
-        )
-
-        self.assertIsInstance(handler.loop, asyncio.AbstractEventLoop)
 
     async def test_init_writer_makes_pipe_nonblocking(self):
         flags = fcntl.fcntl(self.write_pipe.fileno(), fcntl.F_GETFL)
