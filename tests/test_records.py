@@ -27,7 +27,7 @@ class LogRecordTests(unittest.TestCase):
         )
         self.assertEqual(record.get_message(), "Hello world!")
 
-    def test_get_message_with_args(self):
+    def test_get_message_with_args_mapping(self):
         record = LogRecord(
             name="name",
             level=LogLevel.INFO,
@@ -38,16 +38,16 @@ class LogRecordTests(unittest.TestCase):
         )
         self.assertEqual(record.get_message(), "Dog: Xablau")
 
-    def test_it_validates_log_record_args(self):
-        with self.assertRaises(ValueError):
-            LogRecord(
-                name="name",
-                level=LogLevel.INFO,
-                pathname=__file__,
-                lineno=666,
-                msg="Dog: %(dog_name)s",
-                args=(1, 2, 3),
-            )
+    def test_get_message_with_positional_args(self):
+        record = LogRecord(
+            name="name",
+            level=LogLevel.INFO,
+            pathname=__file__,
+            lineno=666,
+            msg="Dog: %s",
+            args=("Xablau",),
+        )
+        self.assertEqual(record.get_message(), "Dog: Xablau")
 
     def test_str_representation(self):
         record = LogRecord(

@@ -410,7 +410,7 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
     async def _delete_files(self, file_paths: List[str]):
         loop = get_running_loop()
         delete_tasks = (
-            loop.run_in_executor(None, lambda: os.unlink(file_path))
+            loop.run_in_executor(None, os.unlink, file_path)
             for file_path in file_paths
         )
         await asyncio.gather(*delete_tasks)
