@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [3.6, 3.7, 3.8, 3.9, 3.x]
+        python: [3.7, 3.8, 3.9, "3.10", 3.x]
     steps:
       - name: install libxml2-dev
         run: sudo apt-get install libxml2-dev libxslt-dev
