@@ -72,28 +72,6 @@ class _LoopCompat:
 
 _F = TypeVar("_F", bound=Callable[..., object])
 
-if sys.version_info >= (3, 10):
-
-    def loop_compat(v: _T) -> _T:
-        return v
-
-    def bind_loop(v: _F, kwargs: dict) -> _F:
-        return v
-
-
-else:
-    loop_compat = _LoopCompat.decorate
-
-    def bind_loop(v: _F, kwargs: dict) -> _F:
-        """
-        bind a loop kwarg, without letting mypy know about it
-        """
-        try:
-            return cast(_F, functools.partial(v, loop=kwargs["loop"]))
-        except KeyError:
-            pass
-        return v
-
 
 class classproperty:
     def __init__(self, func):
