@@ -31,7 +31,7 @@ jobs:
         run: pipenv install --system --deploy --ignore-pipfile --dev
 
       - name: pipenv run test
-        run: pipenv run all-tests
+        run: pipenv run test
 
       - name: Coverage upload
         if: ${{matrix.python == '3.8'}}
