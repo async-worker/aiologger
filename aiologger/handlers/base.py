@@ -1,20 +1,14 @@
 import abc
-import asyncio
 import json
 import sys
-from asyncio import AbstractEventLoop
-from typing import Optional, Union
+from typing import Union
 
 from aiologger import settings
 from aiologger.filters import Filterer
 from aiologger.formatters.base import Formatter
 from aiologger.formatters.json import JsonFormatter
-from aiologger.levels import LogLevel, get_level_name, check_level
+from aiologger.levels import LogLevel, check_level, get_level_name
 from aiologger.records import LogRecord
-
-
-# Handler relies on any formatter
-_default_formatter = Formatter()
 
 
 class Handler(Filterer):
@@ -27,14 +21,14 @@ class Handler(Filterer):
     the 'raw' message as determined by record.message is logged.
     """
 
-    def __init__(self, level: LogLevel = LogLevel.NOTSET) -> None:
+    def __init__(self, level: LogLevel = LogLevel.NOTSET, formatter: Formatter = None) -> None:
         """
         Initializes the instance - basically setting the formatter to None
         and the filter list to empty.
         """
         Filterer.__init__(self)
         self._level = check_level(level)
-        self.formatter: Formatter = _default_formatter
+        self.formatter = Formatter() if formatter is None else formatter
 
     @property
     @abc.abstractmethod
