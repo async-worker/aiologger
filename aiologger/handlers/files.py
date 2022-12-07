@@ -9,12 +9,11 @@ import enum
 import os
 import re
 import time
-from asyncio import AbstractEventLoop
 from typing import Callable, List, Optional
 
 import aiofiles
 from aiofiles.threadpool import AsyncTextIOWrapper
-
+from aiologger.formatters.base import Formatter
 from aiologger.handlers.base import Handler
 from aiologger.records import LogRecord
 from aiologger.utils import classproperty, get_running_loop
@@ -24,9 +23,13 @@ class AsyncFileHandler(Handler):
     terminator = "\n"
 
     def __init__(
-        self, filename: str, mode: str = "a", encoding: str = None
+        self,
+        filename: str,
+        mode: str = "a",
+        encoding: str = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__()
+        super().__init__(formatter=formatter)
         filename = os.fspath(filename)
         self.absolute_file_path = os.path.abspath(filename)
         self.mode = mode
@@ -91,8 +94,9 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         encoding: str = None,
         namer: Namer = None,
         rotator: Rotator = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__(filename, mode, encoding)
+        super().__init__(filename, mode, encoding, formatter)
         self.mode = mode
         self.encoding = encoding
         self.namer = namer
@@ -228,8 +232,11 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         encoding: str = None,
         utc: bool = False,
         at_time: datetime.time = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__(filename=filename, mode="a", encoding=encoding)
+        super().__init__(
+            filename=filename, mode="a", encoding=encoding, formatter=formatter
+        )
         self.when = when.upper()
         self.backup_count = backup_count
         self.utc = utc
