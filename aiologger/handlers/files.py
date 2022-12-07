@@ -23,7 +23,11 @@ class AsyncFileHandler(Handler):
     terminator = "\n"
 
     def __init__(
-        self, filename: str, mode: str = "a", encoding: str = None, formatter: Formatter = None
+        self,
+        filename: str,
+        mode: str = "a",
+        encoding: str = None,
+        formatter: Formatter = None,
     ) -> None:
         super().__init__(formatter=formatter)
         filename = os.fspath(filename)
@@ -230,7 +234,9 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         at_time: datetime.time = None,
         formatter: Formatter = None,
     ) -> None:
-        super().__init__(filename=filename, mode="a", encoding=encoding, formatter=formatter)
+        super().__init__(
+            filename=filename, mode="a", encoding=encoding, formatter=formatter
+        )
         self.when = when.upper()
         self.backup_count = backup_count
         self.utc = utc

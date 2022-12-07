@@ -21,7 +21,9 @@ class Handler(Filterer):
     the 'raw' message as determined by record.message is logged.
     """
 
-    def __init__(self, level: LogLevel = LogLevel.NOTSET, formatter: Formatter = None) -> None:
+    def __init__(
+        self, level: LogLevel = LogLevel.NOTSET, formatter: Formatter = None
+    ) -> None:
         """
         Initializes the instance - basically setting the formatter to None
         and the filter list to empty.
