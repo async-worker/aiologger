@@ -45,12 +45,8 @@ class AsyncFileHandlerTests(asynctest.TestCase):
     async def test_initialization(self):
         mode = "x"
         encoding = "utf-8"
-        loop = Mock()
         handler = AsyncFileHandler(
-            filename=self.temp_file.name,
-            mode=mode,
-            encoding=encoding,
-            loop=loop,
+            filename=self.temp_file.name, mode=mode, encoding=encoding
         )
 
         self.assertIsInstance(handler, AsyncFileHandler)
@@ -58,14 +54,8 @@ class AsyncFileHandlerTests(asynctest.TestCase):
         self.assertEqual(handler.absolute_file_path, self.temp_file.name)
         self.assertEqual(handler.mode, mode)
         self.assertEqual(handler.encoding, encoding)
-        self.assertEqual(handler.loop, loop)
 
         self.assertIsNone(handler.stream)
-
-    async def test_init_gets_the_running_event_loop(self):
-        handler = AsyncFileHandler(filename=self.temp_file.name)
-
-        self.assertIsInstance(handler.loop, asyncio.AbstractEventLoop)
 
     async def test_close_closes_the_file(self):
         handler = AsyncFileHandler(filename=self.temp_file.name)
@@ -357,10 +347,7 @@ class AsyncTimedRotatingFileHandlerTests(asynctest.TestCase):
         with freeze_time("2019-01-20 20:22:49") as frozen_datetime:
             with patch(
                 "aiologger.handlers.files.os.stat",
-                return_value=Mock(
-                    st_mtime=frozen_datetime.time_to_freeze.timestamp()
-                    - time.altzone
-                ),
+                return_value=Mock(st_mtime=time.time()),
             ), patch("aiologger.handlers.files.os.unlink") as unlink:
                 new_file_path = f"{self.temp_file.name}.2019-01-20_20-22-49"
                 os.open(new_file_path, os.O_CREAT)

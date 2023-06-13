@@ -9,25 +9,27 @@ import enum
 import os
 import re
 import time
-from asyncio import AbstractEventLoop
 from typing import Callable, List, Optional
 
 import aiofiles
 from aiofiles.threadpool import AsyncTextIOWrapper
-
+from aiologger.formatters.base import Formatter
 from aiologger.handlers.base import Handler
 from aiologger.records import LogRecord
-from aiologger.utils import classproperty, get_running_loop, loop_compat
+from aiologger.utils import classproperty, get_running_loop
 
 
-@loop_compat
 class AsyncFileHandler(Handler):
     terminator = "\n"
 
     def __init__(
-        self, filename: str, mode: str = "a", encoding: str = None
+        self,
+        filename: str,
+        mode: str = "a",
+        encoding: str = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__()
+        super().__init__(formatter=formatter)
         filename = os.fspath(filename)
         self.absolute_file_path = os.path.abspath(filename)
         self.mode = mode
@@ -92,8 +94,9 @@ class BaseAsyncRotatingFileHandler(AsyncFileHandler, metaclass=abc.ABCMeta):
         encoding: str = None,
         namer: Namer = None,
         rotator: Rotator = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__(filename, mode, encoding)
+        super().__init__(filename, mode, encoding, formatter)
         self.mode = mode
         self.encoding = encoding
         self.namer = namer
@@ -229,8 +232,11 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         encoding: str = None,
         utc: bool = False,
         at_time: datetime.time = None,
+        formatter: Formatter = None,
     ) -> None:
-        super().__init__(filename=filename, mode="a", encoding=encoding)
+        super().__init__(
+            filename=filename, mode="a", encoding=encoding, formatter=formatter
+        )
         self.when = when.upper()
         self.backup_count = backup_count
         self.utc = utc
@@ -404,16 +410,15 @@ class AsyncTimedRotatingFileHandler(BaseAsyncRotatingFileHandler):
         if len(result) < self.backup_count:
             return []
         else:
-            result.sort(reverse=True)  # os.listdir order is not defined
+            result.sort()  # os.listdir order is not defined
             return result[: len(result) - self.backup_count]
 
     async def _delete_files(self, file_paths: List[str]):
         loop = get_running_loop()
-        delete_tasks = (
-            loop.run_in_executor(None, lambda: os.unlink(file_path))
-            for file_path in file_paths
-        )
-        await asyncio.gather(*delete_tasks)
+        for file_path in file_paths:
+            await loop.run_in_executor(  # type: ignore
+                None, lambda: os.unlink(file_path)
+            )
 
     async def do_rollover(self):
         """
